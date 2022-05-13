@@ -21,7 +21,7 @@ class SolanumTuberosum(keras.utils.Sequence):
     https://keras.io/examples/vision/oxford_pets_image_segmentation/#prepare-sequence-class-to-load-amp-vectorize-batches-of-data
     """
 
-    def __init__(self, batch_size: int, img_size: Tuple[int, int], input_img_paths, target_paths: List[str], augment=False, seed=1):
+    def __init__(self, batch_size: int, img_size: Tuple[int, int], input_img_paths: List[str], target_paths: List[str], augment=False, seed=1):
         self.batch_size = batch_size
         self.img_size = img_size
         self.input_img_paths = input_img_paths
@@ -34,7 +34,7 @@ class SolanumTuberosum(keras.utils.Sequence):
 
     def __getitem__(self, idx):
         """
-        Returns tuple (input, target) correspond to batch #idx.
+        Returns tuple (input, target) corresponding to batch #idx.
         """
         i = idx * self.batch_size
         batch_input_img_paths = self.input_img_paths[i: i + self.batch_size]
@@ -51,6 +51,7 @@ class SolanumTuberosum(keras.utils.Sequence):
         for j, target_path in enumerate(batch_target_paths):
             masks = np.expand_dims(load_img(target_path, target_size=self.img_size, color_mode="grayscale"), -1)
             y[j] = masks
+
         return x, y
 
 
@@ -112,7 +113,7 @@ def generate_contour_maps(directory: str, annotations_file: str):
             cv2.imwrite(f"SolanumTuberosum/Contours/cnt_{a['filename'][:-4]}.png", mask)
 
 
-def generate_masks(root_dir: str, annotations_file):
+def generate_masks(root_dir: str, annotations_file: str):
     """
     Function to generate the binary masks from json annotation files. Saves the masks as PNG files in 'Masks' subdirectory.
     """
@@ -179,43 +180,42 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
                     id_number += 1
 
 
-def flip_im(im_name):
-    im = Image.open(os.path.join('SolanumTuberosum', 'Images', im_name))
+def flip_im(img_name):
+    im = Image.open(os.path.join('SolanumTuberosum', 'Images', img_name))
     im = np.rot90(im)
     # im = np.fliplr(np.array(im))
     im = Image.fromarray(im)
-    im.save(os.path.join('SolanumTuberosum', 'Images', im_name))
+    im.save(os.path.join('SolanumTuberosum', 'Images', img_name))
 
 
-if __name__ == "__main__":
-    # GenerateDataset('SolanumTuberosum')
+# GenerateDataset('SolanumTuberosum')
 
-    directory = 'SolanumTuberosum'
-
-    # for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(directory, 'Resized_images'))),
-    #                                             sorted(os.listdir(os.path.join(directory, 'Resized_masks'))),
-    #                                             sorted(os.listdir(os.path.join(directory, 'Resized_contours')))):
-    #     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-    #     ax = axes.ravel()
-    #
-    #     im = Image.open(os.path.join(directory, 'Resized_images', im_name))
-    #     mask = Image.open(os.path.join(directory, 'Resized_masks', mask_name))
-    #     cnt = Image.open(os.path.join(directory, 'Resized_contours', contour_name))
-    #
-    #     ax[0].imshow(im)
-    #     ax[1].imshow(mask)
-    #     ax[2].imshow(cnt)
-    #     plt.show()
-
-    # for i in range(0, 3000, 50):
-    #     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-    #     ax = axes.ravel()
-    #
-    #     im = Image.open(f'SolanumTuberosum/TrainImages/img_{i+1:04}.png')
-    #     mask = Image.open(f'SolanumTuberosum/TrainMasks/mask_{i+1:04}.png')
-    #     cnt = Image.open(f'SolanumTuberosum/TrainContours/cnt_{i+1:04}.png')
-    #
-    #     ax[0].imshow(im)
-    #     ax[1].imshow(mask)
-    #     ax[2].imshow(cnt)
-    #     plt.show()
+# dir_pdt = 'SolanumTuberosum'
+#
+# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images'))),
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks'))),
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))):
+#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#     ax = axes.ravel()
+#
+#     im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
+#     mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
+#     cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
+#
+#     ax[0].imshow(im)
+#     ax[1].imshow(mask)
+#     ax[2].imshow(cnt)
+#     plt.show()
+#
+# for i in range(0, 3000, 50):
+#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#     ax = axes.ravel()
+#
+#     im = Image.open(f'SolanumTuberosum/TrainImages/img_{i+1:04}.png')
+#     mask = Image.open(f'SolanumTuberosum/TrainMasks/mask_{i+1:04}.png')
+#     cnt = Image.open(f'SolanumTuberosum/TrainContours/cnt_{i+1:04}.png')
+#
+#     ax[0].imshow(im)
+#     ax[1].imshow(mask)
+#     ax[2].imshow(cnt)
+#     plt.show()

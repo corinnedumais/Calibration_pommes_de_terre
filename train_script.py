@@ -14,7 +14,7 @@ from skimage.filters.rank import modal
 from skimage.morphology import rectangle, remove_small_objects
 from tensorflow import keras
 
-from segmentation import full_prediction
+from Utils.segmentation import full_prediction
 from Model import UNetST, dice_coeff, dice_loss, weighted_bce, combined
 from Utils.dataset import SolanumTuberosum
 
