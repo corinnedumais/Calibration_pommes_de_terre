@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 import keras
-import cv2
 import matplotlib.pyplot as plt
 
-from Utils.Display import show
+from Utils.utils import show
 from Utils.utils import pixels_to_mm
 from Model import dice_loss, combined, dice_coeff
-from segmentation import segment_potatoes
+from Utils.segmentation import segment_potatoes
 
 model_mask = keras.models.load_model('Trained Models/mask_final.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 model_contour = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 
 path = f'SolanumTuberosum/Test_images/test1.jpg'
 
-color_img, d, h, a = segment_potatoes(path, model_mask, model_contour, patch_size=256, resize=(2048, 1536))
-heights = [pixels_to_mm(h[i], a[i], 72, 1.97) for i in range(len(h))]
-diameters = [pixels_to_mm(d[i], a[i], 72, 1.97) for i in range(len(d))]
+color_img, d, h = segment_potatoes(path, model_mask, model_contour, patch_size=256, resize=(2048, 1536))
+heights = [pixels_to_mm(h[i], 72, 1.97) for i in range(len(h))]
+diameters = [pixels_to_mm(d[i], 72, 1.97) for i in range(len(d))]
 show(color_img, dims=(1000, 750))
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4), sharey='all')
 ax1.hist(heights, bins=[50, 70, 90, 110, 130, 150, 170, 190], alpha=0.5, histtype='bar', ec='black')
