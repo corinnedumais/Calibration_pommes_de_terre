@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import cv2
 
 
 def pixels_to_mm(px_measure: float, original_resolution: int, resize_factor: float) -> float:
@@ -51,3 +52,20 @@ def normalize_dataset(dataset: np.ndarray) -> np.ndarray:
             row[i] = (row[i] - min_max[i][0]) / (min_max[i][1] - min_max[i][0])
 
     return dataset
+
+
+def show(img, dims=(1536, 2048)):
+    """
+    Utility function to facilitate display of result with cv2.
+
+    Parameters
+    ----------
+    img
+        Image to display.
+    dims: tuple of int
+          Display dimensions (default is 1536 x 2048)
+    """
+    cv2.namedWindow('PDT_detection', cv2.WINDOW_NORMAL)
+    im = cv2.resizeWindow('PDT_detection', dims[0], dims[1])
+    cv2.imshow('PDT_detection', img)
+    cv2.waitKey(0)
