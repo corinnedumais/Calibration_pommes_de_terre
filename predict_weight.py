@@ -6,7 +6,7 @@ from scipy.stats import linregress
 from tensorflow import keras
 from tensorflow.keras import layers
 
-from Utils.weights import normalize_dataset
+from Utils.utils import normalize_dataset
 
 np.random.seed(6)
 

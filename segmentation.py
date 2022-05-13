@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from skimage.filters.rank import modal
 from skimage.morphology import rectangle
 
-from Utils.conversion import pixels_to_mm
+from Utils.utils import pixels_to_mm
 
 def full_prediction(trained_model, img_path, patch_size, resize):
     """

@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 from Utils.Display import show
-from Utils.conversion import pixels_to_mm
+from Utils.utils import pixels_to_mm
 from Model import dice_loss, combined, dice_coeff
 from segmentation import segment_potatoes
 
