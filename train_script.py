@@ -16,7 +16,7 @@ from tensorflow import keras
 
 from segmentation import full_prediction
 from Model import UNetST, dice_coeff, dice_loss, weighted_bce, combined
-from Utils.Dataset import SolanumTuberosum
+from Utils.dataset import SolanumTuberosum
 
 input_dir = 'SolanumTuberosum/TrainImages'
 masks_dir = 'SolanumTuberosum/TrainMasks'
