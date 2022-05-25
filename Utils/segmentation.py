@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
+import time
 from typing import Tuple
 
 import cv2
 import numpy as np
+import skimage.draw
 from PIL import Image
+from matplotlib import pyplot as plt
+from matplotlib.colors import ListedColormap
 from skimage.filters.rank import modal
-from skimage.morphology import rectangle
+from skimage.measure import label
+from skimage.morphology import rectangle, remove_small_objects
+from scipy.ndimage import binary_hit_or_miss
 
-from Utils.utils import pixels_to_mm
+from Utils.gapfilling import fill_gaps
+from Utils.utils import pixels_to_mm, show
 
 
 def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple[int, int]) -> np.ndarray:
@@ -50,7 +57,8 @@ def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple
     return segm_img[:, :, 0]
 
 
-def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int, resize: Tuple[int, int]) -> Tuple[np.ndarray, list, list]:
+def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int, resize: Tuple[int, int]) -> Tuple[
+    np.ndarray, list, list]:
     """
     Function to segment the potatoes from an image using the models trained with UNet architecture.
 
@@ -88,17 +96,54 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     pred_mask = modal(pred_mask, rectangle(5, 5))
     pred_contour = modal(pred_contour, rectangle(5, 5))
 
+    pred_contour = cv2.ximgproc.thinning(pred_contour)/255
+    pred_contour = pred_contour.astype(np.uint8)
+
+    pred_contour = remove_small_objects(label(pred_contour), 50)
+    pred_contour[pred_contour != 0] = 1
+
+    pred_mask = remove_small_objects(label(pred_mask), 150)
+    pred_mask[pred_mask != 0] = 255
+    pred_mask = pred_mask.astype(np.uint8)
+
+    plt.imshow(pred_mask)
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
+
+    ###############################
+
+    # start_time = time.time()
+    # pred_contour = fill_gaps(pred_contour, n_iterations=10)
+    # print(f'Execution time: {time.time() - start_time: .3f} seconds')
+
+    ###############################################
+
+    pred_contour[pred_contour != 0] = 1
+    pred_contour = pred_contour.astype(np.float32)
+    pred_contour = cv2.dilate(pred_contour, np.ones((3, 3)))
+    pred_contour = pred_contour.astype(np.uint8)
+
     # Subtraction of the two masks and elimination of negative values
-    pred = pred_mask - pred_contour
-    pred[pred < 5] = 0
+    pred_mask[pred_contour == 1] = 0
 
     # Load the image in RGB
     color_img = Image.open(img_path)
     color_img = color_img.resize(resize, Image.ANTIALIAS)
     color_img = cv2.cvtColor(np.array(color_img), cv2.COLOR_RGB2BGR)
 
+    contours, _ = cv2.findContours(pred_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    edges = cv2.cvtColor(pred_mask, cv2.COLOR_GRAY2RGB)
+
+    # colors = [(int(255 * np.random.random()), int(255 * np.random.random()), int(255 * np.random.random())) for _ in
+    #           range(len(contours))]
+    # for i, color in enumerate(colors):
+    #     cv2.drawContours(edges, contours, i, color=color, thickness=2)
+    # plt.imshow(edges)
+    # plt.show()
+
     # Locate the edges
-    contours, _ = cv2.findContours(pred.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(pred_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     # Lists to store dimensions
     widths, heights = [], []
@@ -111,24 +156,20 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
             # Center coordinates (must be integers)
             xc, yc = round(ellipse[0][0]), round(ellipse[0][1])
 
-            # Factors to account for erosion due to contour subtraction.
-            factor_h = 1.05
-            factor_w = 1.1
-
             # Semi-axis (must be integers)
             widthE, heightE = ellipse[1]
-            a, b = round(0.5 * heightE * factor_h), round(0.5 * widthE * factor_w)
+            a, b = round(0.5 * heightE) + 4, round(0.5 * widthE) + 4
             angle = ellipse[2]
 
             # we filter the ellipses to eliminate those who are too small
-            if a > 10 and b > 10:
+            if cv2.contourArea(contour) > 200 and a > 20 and b > 20:
                 cv2.ellipse(color_img, (xc, yc), (b, a), angle, 0, 360, (0, 0, 255), 2)
-                cv2.putText(color_img, f'{pixels_to_mm(widthE * factor_w, 72, 1.97):.0f} mm', (xc - 25, yc),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
-                cv2.putText(color_img, f'{pixels_to_mm(heightE * factor_h, 72, 1.97):.0f} mm', (xc - 25, yc + 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 0, 128), 2, cv2.LINE_AA)
-                widths.append(widthE * factor_w)
-                heights.append(heightE * factor_h)
+                # cv2.putText(color_img, f'{pixels_to_mm(widthE * factor_w, 72, 1.97):.0f} mm', (xc - 25, yc),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
+                # cv2.putText(color_img, f'{pixels_to_mm(heightE * factor_h, 72, 1.97):.0f} mm', (xc - 25, yc + 20),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 0, 128), 2, cv2.LINE_AA)
+                widths.append(widthE)
+                heights.append(heightE)
 
             cv2.imwrite('preds.png', color_img)
 
