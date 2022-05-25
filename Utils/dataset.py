@@ -43,6 +43,7 @@ class SolanumTuberosum(keras.utils.Sequence):
         random.seed(self.seed)
         x = np.zeros((self.batch_size,) + self.img_size + (3,), dtype="float32")
         for j, path in enumerate(batch_input_img_paths):
+            # load img in rgb
             img = load_img(path, target_size=self.img_size)
             x[j] = img
 
@@ -61,12 +62,12 @@ def GenerateDataset(directory: str):
     truth) from the annotations file, resizes both the images and masks and splits them up in patches of shape 256x256.
     """
     # Step 1: Get training images and resize to 3 different sizes
-    # for filename in os.listdir(os.path.join(directory, 'Images')):
-    #     if filename.endswith(".jpg") or filename.endswith(".png"):
-    #         img = Image.open(os.path.join(directory, 'Images', filename))
-    #         for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
-    #             img = img.resize(size, Image.ANTIALIAS)
-    #             img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'), quality=100)
+    for filename in os.listdir(os.path.join(directory, 'Images')):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            img = Image.open(os.path.join(directory, 'Images', filename))
+            for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
+                img = img.resize(size, Image.ANTIALIAS)
+                img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'), quality=100)
 
     # Step 2: Get binary masks and contour masks from jason annotations
     # generate_masks(os.path.join(directory, 'Images'), 'annotations.json')
@@ -189,12 +190,12 @@ def flip_im(img_name):
 
 
 # GenerateDataset('SolanumTuberosum')
-
+#
 # dir_pdt = 'SolanumTuberosum'
 #
-# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images'))),
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks'))),
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))):
+# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
 #     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
 #     ax = axes.ravel()
 #
