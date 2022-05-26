@@ -62,12 +62,12 @@ def GenerateDataset(directory: str):
     truth) from the annotations file, resizes both the images and masks and splits them up in patches of shape 256x256.
     """
     # Step 1: Get training images and resize to 3 different sizes
-    # for filename in os.listdir(os.path.join(directory, 'Images')):
-    #     if filename.endswith(".jpg") or filename.endswith(".png"):
-    #         img = Image.open(os.path.join(directory, 'Images', filename))
-    #         for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
-    #             img = img.resize(size, Image.ANTIALIAS)
-    #             img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'), quality=100)
+    for filename in os.listdir(os.path.join(directory, 'Images')):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            img = Image.open(os.path.join(directory, 'Images', filename))
+            for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
+                img = img.resize(size, Image.ANTIALIAS)
+                img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'), quality=100)
 
     # Step 2: Get binary masks and contour masks from jason annotations
     # generate_masks(os.path.join(directory, 'Images'), 'annotations.json')
