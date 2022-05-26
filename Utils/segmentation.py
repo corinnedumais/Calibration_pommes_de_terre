@@ -102,15 +102,6 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     pred_contour = remove_small_objects(label(pred_contour), 50)
     pred_contour[pred_contour != 0] = 1
 
-    pred_mask = remove_small_objects(label(pred_mask), 150)
-    pred_mask[pred_mask != 0] = 255
-    pred_mask = pred_mask.astype(np.uint8)
-
-    plt.imshow(pred_mask)
-    plt.tight_layout()
-    plt.axis('off')
-    plt.show()
-
     ###############################
 
     # start_time = time.time()
@@ -126,6 +117,15 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
 
     # Subtraction of the two masks and elimination of negative values
     pred_mask[pred_contour == 1] = 0
+
+    pred_mask = remove_small_objects(label(pred_mask), 4000)
+    pred_mask[pred_mask != 0] = 255
+    pred_mask = pred_mask.astype(np.uint8)
+
+    plt.imshow(pred_mask)
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
 
     # Load the image in RGB
     color_img = Image.open(img_path)
