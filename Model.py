@@ -115,7 +115,7 @@ class UNetST:
         conv9 = Conv2D(self.output_classes, kernel_size=(1, 1), activation='sigmoid', padding='same')(conv9)
 
         model = Model(inputs=inputs, outputs=conv9)
-        model.compile(optimizer=self.optimizer, loss=combined, metrics=['accuracy', dice_coeff])
+        model.compile(optimizer=self.optimizer, loss=dice_loss, metrics=['accuracy', dice_coeff])
 
         return model
 
