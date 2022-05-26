@@ -21,10 +21,10 @@ from Utils.dataset import SolanumTuberosum
 input_dir = 'SolanumTuberosum/TrainImages'
 masks_dir = 'SolanumTuberosum/TrainMasks'
 contours_dir = 'SolanumTuberosum/TrainContours'
-target_dir = contours_dir
+target_dir = masks_dir
 
-input_img_paths = sorted([os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".png")])
-target_paths = sorted([os.path.join(target_dir, file) for file in os.listdir(target_dir) if file.endswith(".png")])
+input_img_paths = sorted([os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".png")])[::2]
+target_paths = sorted([os.path.join(target_dir, file) for file in os.listdir(target_dir) if file.endswith(".png")])[::2]
 assert len(input_img_paths) == len(target_paths), 'Number of targets and images must be equal'
 
 batch_size = 8
@@ -32,7 +32,8 @@ img_size = (256, 256)
 epochs = 20
 
 # Split our img paths into a training and a validation set
-val_samples = 665
+val_samples = 400
+
 random.Random(1337).shuffle(input_img_paths)
 random.Random(1337).shuffle(target_paths)
 train_input_img_paths, train_target_paths = input_img_paths[:-val_samples], target_paths[:-val_samples]
@@ -48,17 +49,17 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/cnt_64.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_colors2.h5", save_best_only=True)]
 
 model = UNetST(input_size=(256, 256, 3), output_classes=1).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
-# model = keras.models.load_model('Trained Models/cnt_2004_diceBCE(90).h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-# model = keras.models.load_model('Trained Models/pdt_1904.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+# model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
+# model = keras.models.load_model('Trained Models/mask_colors.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
-# path = 'SolanumTuberosum/Test_images/test1.jpg'
-# pred = full_prediction(model, path, 256)
+# path = 'SolanumTuberosum/Test_images/test4.jpg'
+# pred = full_prediction(model, path, 256, (2048, 1536))
 # pred = modal(pred, rectangle(3, 3))
 # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))
 # ax1.imshow(load_img(path, color_mode='rgb'), cmap='gray')
@@ -72,9 +73,6 @@ model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_g
 # val_preds = model.predict(val_gen)
 # for i in range(len(val_preds)):
 #     im = val_preds[i] > 0.5
-#     # im = modal(im, rectangle(5, 5))
-#     # im = cv2.dilate(im, np.ones((3, 3)), iterations=2)
-#     # im = cv2.erode(im, np.ones((3, 3)), iterations=2)
 #     fig, axes = plt.subplots(ncols=3, figsize=(10, 4))
 #     ax = axes.ravel()
 #

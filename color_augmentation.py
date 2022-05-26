@@ -16,12 +16,13 @@ mask = cv2.inRange(hsv, lower_brown, upper_brown)
 # Bitwise-AND mask and original image
 res = cv2.bitwise_and(img, img, mask=mask)
 
-# res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 res[np.where((res == [0, 0, 0]).all(axis=2))] = [255, 0, 0]
 
+plt.figure(figsize=(8, 8))
 plt.imshow(res, cmap='gray')
 plt.axis('off')
 plt.tight_layout()
 plt.show()
 
-cv2.imwrite('01_black.jpg', res)
+# cv2.imwrite('01_black.jpg', res)
