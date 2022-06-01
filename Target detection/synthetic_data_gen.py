@@ -30,13 +30,10 @@ def generate_background(noise):
     return img
 
 
-def generate_synthetic_img(no, noise=0.1, instances=(30, 60), targets=6, x_pos=range(500, 1600), y_pos=range(400, 1000),
+def generate_synthetic_img(no, noise=0.1, instances=70, targets=6, x_pos=range(500, 1600), y_pos=range(400, 1000),
                            widths=range(40, 100), heights=range(50, 180), max_d=100):
     # Generate background of random color with noise
     img = generate_background(noise)
-
-    # Random number of PDT within given range
-    num_pdt = np.random.randint(instances[0], instances[1] + 1)
 
     # List to keep track of center positions of objects in the image
     center_coords = []
@@ -89,7 +86,7 @@ def generate_synthetic_img(no, noise=0.1, instances=(30, 60), targets=6, x_pos=r
     fig2.savefig(f'Synthetic_masks/syn_mask{no:02}.png', dpi=500)
 
     # Draw potatoes
-    for i in range(num_pdt):
+    for i in range(instances):
         xy = (np.random.choice(x_pos), np.random.choice(y_pos))
         while too_much_overlap(xy, center_coords, max_d):
             xy = (np.random.choice(x_pos), np.random.choice(y_pos))
@@ -110,33 +107,25 @@ def generate_synthetic_img(no, noise=0.1, instances=(30, 60), targets=6, x_pos=r
     fig.savefig(f'Synthetic_data/syn{no:02}.jpg', dpi=500)
 
 
-for it in tqdm(range(1, 6)):
-    generate_synthetic_img(it, noise=0.05, instances=(40, 50), targets=6, x_pos=range(700, 1500), y_pos=range(500, 900),
-                           widths=range(60, 100), heights=range(70, 180), max_d=60)
-# for it in tqdm(range(6, 11)):
-#     generate_synthetic_img(it, noise=0.06, instances=(50, 60), targets=6, x_pos=range(400, 1600), y_pos=range(400, 1300),
-#                            widths=range(80, 110), heights=range(100, 180), max_d=75)
-# for it in tqdm(range(11, 16)):
-#     generate_synthetic_img(it, noise=0.07, instances=(70, 80), targets=7, x_pos=range(400, 1700), y_pos=range(200, 1000),
-#                            widths=range(90, 100), heights=range(130, 160), max_d=70)
-# for it in tqdm(range(16, 21)):
-#     generate_synthetic_img(it, noise=0.08, instances=(60, 70), targets=5, x_pos=range(500, 1500), y_pos=range(600, 1100),
-#                            widths=range(80, 90), heights=range(150, 180), max_d=60)
-# for it in tqdm(range(21, 26)):
-#     generate_synthetic_img(it, noise=0.09, instances=(90, 100), targets=6, x_pos=range(200, 1900), y_pos=range(200, 1400),
-#                            widths=range(70, 110), heights=range(110, 180), max_d=60)
-# for it in tqdm(range(26, 31)):
-#     generate_synthetic_img(it, noise=0.15, instances=(80, 90), targets=8, x_pos=range(200, 1800), y_pos=range(300, 1300),
-#                            widths=range(90, 120), heights=range(130, 170), max_d=70)
-# for it in tqdm(range(31, 36)):
-#     generate_synthetic_img(it, noise=0.14, instances=(40, 50), targets=6, x_pos=range(400, 1700), y_pos=range(400, 1200),
-#                            widths=range(100, 130), heights=range(160, 200), max_d=100)
-# for it in tqdm(range(36, 41)):
-#     generate_synthetic_img(it, noise=0.13, instances=(60, 70), targets=6, x_pos=range(400, 1700), y_pos=range(400, 1000),
-#                            widths=range(60, 100), heights=range(70, 180), max_d=70)
-# for it in tqdm(range(41, 46)):
-#     generate_synthetic_img(it, noise=0.12, instances=(70, 80), targets=6, x_pos=range(400, 1700), y_pos=range(400, 1000),
-#                            widths=range(60, 100), heights=range(70, 180), max_d=90)
-# for it in tqdm(range(46, 51)):
-#     generate_synthetic_img(it, noise=0.12, instances=(80, 90), targets=6, x_pos=range(400, 1700), y_pos=range(400, 1000),
-#                            widths=range(60, 100), heights=range(70, 180), max_d=50)
+for it in tqdm(range(6, 51)):
+
+    # Generate random parameters for each image
+    noise = np.random.random() * 0.15
+    num_pdt = np.random.randint(40, 75)
+    targets = np.random.randint(4, 9)
+    x_inf, x_sup = np.random.randint(100, 500), np.random.randint(1500, 2000)
+    y_inf, y_sup = np.random.randint(100, 500), np.random.randint(1000, 1500)
+    w_inf, w_sup = np.random.randint(80, 120), np.random.randint(130, 140)
+    h_inf, h_sup = np.random.randint(140, 170), np.random.randint(170, 210)
+    max_d = np.random.randint(50, 100)
+
+    # Create and save the synthetic image
+    generate_synthetic_img(no=it,
+                           noise=noise,
+                           instances=num_pdt,
+                           targets=targets,
+                           x_pos=range(x_inf, x_sup),
+                           y_pos=range(y_inf, y_sup),
+                           widths=range(w_inf, w_sup),
+                           heights=range(h_inf, h_sup),
+                           max_d=max_d)
