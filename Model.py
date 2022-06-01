@@ -23,7 +23,7 @@ class UNetST:
     Class representing a U-Net neural network to segment potatoes
     """
 
-    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=32, batchnorm=False):
+    def __init__(self, input_size, output_classes, kernel_size=(5, 5), channels=8, batchnorm=False):
         """
         Parameters:
             input_size (tuple): Size of the input data (height, width, channels)
