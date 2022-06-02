@@ -18,8 +18,8 @@ from Utils.segmentation import full_prediction
 from Model import UNetST, dice_coeff, dice_loss, weighted_bce, combined
 from dataset_target import CalibrationTargets
 
-input_dir = 'Target detection/TrainImages'
-target_dir = 'Target detection/TrainMasks'
+input_dir = 'Target detection/Images_patches'
+target_dir = 'Target detection/Masks_patches'
 
 input_img_paths = sorted([os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".png")])
 target_paths = sorted([os.path.join(target_dir, file) for file in os.listdir(target_dir) if file.endswith(".png")])
