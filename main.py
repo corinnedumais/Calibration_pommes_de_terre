@@ -8,10 +8,10 @@ from Utils.utils import pixels_to_mm
 from Model import dice_loss, combined, dice_coeff
 from Utils.segmentation import segment_potatoes
 
-model_mask = keras.models.load_model('Trained Models/mask_colors2.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model_mask = keras.models.load_model('Trained Models/mask_colors3.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 model_contour = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 
-path = 'gallerie_colors.jpg'
+path = 'img.png'
 color_img, d, h = segment_potatoes(path, model_mask, model_contour, patch_size=256, resize=(2048, 1536))
 show(color_img, dims=(1000, 750))
 # cv2.imwrite('gallerie.png', color_img)

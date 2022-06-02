@@ -32,10 +32,10 @@ img_size = (256, 256)
 epochs = 20
 
 # Split our img paths into a training and a validation set
-val_samples = 400
+val_samples = 600
 
-random.Random(1337).shuffle(input_img_paths)
-random.Random(1337).shuffle(target_paths)
+random.Random(1339).shuffle(input_img_paths)
+random.Random(1339).shuffle(target_paths)
 train_input_img_paths, train_target_paths = input_img_paths[:-val_samples], target_paths[:-val_samples]
 val_input_img_paths, val_target_paths = input_img_paths[-val_samples:], target_paths[-val_samples:]
 
@@ -49,7 +49,7 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_colors2.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_colors4.h5", save_best_only=True)]
 
 model = UNetST(input_size=(256, 256, 3), output_classes=1).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
@@ -70,22 +70,22 @@ model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_g
 # plt.show()
 
 ## TO CHECK PATCH PREDICTIONS ON VALIDATION DATA ###
-# val_preds = model.predict(val_gen)
-# for i in range(len(val_preds)):
-#     im = val_preds[i] > 0.5
-#     fig, axes = plt.subplots(ncols=3, figsize=(10, 4))
-#     ax = axes.ravel()
-#
-#     ax[0].imshow(load_img(val_input_img_paths[i], color_mode='rgb'), cmap='gray')
-#     # ax[0].set_title('Image originale')
-#     ax[1].imshow(load_img(val_target_paths[i], color_mode='grayscale'), cmap='gray')
-#     # ax[1].set_title('Vérité terrain')
-#     ax[2].imshow(im, cmap='gray')
-#     # ax[2].set_title('Prédiction du modèle')
-#     ax[0].axis('off')
-#     ax[1].axis('off')
-#     ax[2].axis('off')
-#     plt.tight_layout()
-#     plt.show()
+val_preds = model.predict(val_gen)
+for i in range(len(val_preds)):
+    im = val_preds[i] > 0.5
+    fig, axes = plt.subplots(ncols=3, figsize=(10, 4))
+    ax = axes.ravel()
+
+    ax[0].imshow(load_img(val_input_img_paths[i], color_mode='rgb'), cmap='gray')
+    # ax[0].set_title('Image originale')
+    ax[1].imshow(load_img(val_target_paths[i], color_mode='grayscale'), cmap='gray')
+    # ax[1].set_title('Vérité terrain')
+    ax[2].imshow(im, cmap='gray')
+    # ax[2].set_title('Prédiction du modèle')
+    ax[0].axis('off')
+    ax[1].axis('off')
+    ax[2].axis('off')
+    plt.tight_layout()
+    plt.show()
 #     # plt.savefig(f'Results/10-03-2022/prediction{i+1:03}')
 #     # plt.clf()
