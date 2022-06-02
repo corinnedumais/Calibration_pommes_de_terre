@@ -52,23 +52,25 @@ class CalibrationTargets(keras.utils.Sequence):
         return x, y
 
 
-def generate_patches_synthetic(directory: str, window_shape: Tuple[int, int, int], step: int):
+def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int], step: int, mode='Train'):
     """
     Function that generates patches for all images in the directory. Patches are of shape window_shape and with an
     overlap controlled by the parameter step.
     """
+    assert mode in ['Train', 'Eval'], 'Argument passed for mode must be either Train or Eval.'
+
     # Generate patches for all the images
     id_number = 1
-    for im_name, mask_name in zip(sorted(os.listdir(os.path.join(directory, 'Images'))),
-                                  sorted(os.listdir(os.path.join(directory, 'Masks')))):
+    for im_name, mask_name in zip(sorted(os.listdir(os.path.join(directory, 'Dataset Target', mode, 'Images'))),
+                                  sorted(os.listdir(os.path.join(directory, 'Dataset Target', mode, 'Masks')))):
 
-        img = cv2.imread(os.path.join(directory, 'Images', im_name))
+        img = cv2.imread(os.path.join(directory, 'Dataset Target', mode, 'Images', im_name))
         img = Image.fromarray(img)
         img = img.resize((2048, 1536), Image.ANTIALIAS)
         img = np.array(img)
         img_crop = view_as_windows(img, window_shape=window_shape, step=step)
 
-        mask = cv2.imread(os.path.join(directory, 'Masks', mask_name), cv2.IMREAD_GRAYSCALE)
+        mask = cv2.imread(os.path.join(directory,  'Dataset Target', mode, 'Masks', mask_name), cv2.IMREAD_GRAYSCALE)
         mask = Image.fromarray((mask/255).astype(np.uint8))
         mask = mask.resize((2048, 1536), Image.ANTIALIAS)
         mask = np.array(mask)
@@ -90,27 +92,28 @@ def generate_patches_synthetic(directory: str, window_shape: Tuple[int, int, int
                 if np.all((mask_saved == 0)):
                     continue
                 else:
-                    cv2.imwrite(os.path.join(directory, 'TrainImages2', f'img_{id_number:04}.png'), im_saved)
-                    cv2.imwrite(os.path.join(directory, 'TrainImages2', f'img_{id_number+1:04}.png'), im90)
-                    cv2.imwrite(os.path.join(directory, 'TrainImages2', f'img_{id_number+2:04}.png'), im180)
-                    cv2.imwrite(os.path.join(directory, 'TrainImages2', f'img_{id_number+3:04}.png'), im270)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number:04}.png'), im_saved)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+1:04}.png'), im90)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+2:04}.png'), im180)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+3:04}.png'), im270)
 
-                    cv2.imwrite(os.path.join(directory, 'TrainMasks2', f'mask_{id_number:04}.png'), mask_saved)
-                    cv2.imwrite(os.path.join(directory, 'TrainMasks2', f'mask_{id_number+1:04}.png'), mask90)
-                    cv2.imwrite(os.path.join(directory, 'TrainMasks2', f'mask_{id_number+2:04}.png'), mask180)
-                    cv2.imwrite(os.path.join(directory, 'TrainMasks2', f'mask_{id_number+3:04}.png'), mask270)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number:04}.png'), mask_saved)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+1:04}.png'), mask90)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+2:04}.png'), mask180)
+                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+3:04}.png'), mask270)
 
                     id_number += 4
 
 
-# generate_patches_synthetic('Target detection', window_shape=(256, 256, 3), step=128)
+# generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
+# generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
 
 # for i in range(0, 950, 25):
 #     fig, axes = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
 #     ax = axes.ravel()
 #
-#     im = Image.open(f'Target detection/TrainImages/img_{i+1:04}.png')
-#     mask = Image.open(f'Target detection/TrainMasks/mask_{i+1:04}.png')
+#     im = Image.open(f'Target detection/Dataset Target/Eval/Images_patches/img_{i+1:04}.png')
+#     mask = Image.open(f'Target detection/Dataset Target/Eval/Masks_patches/mask_{i+1:04}.png')
 #
 #     ax[0].imshow(im)
 #     ax[1].imshow(mask)
