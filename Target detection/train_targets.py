@@ -4,18 +4,9 @@ import os
 
 import random
 
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-
-from keras.preprocessing.image import load_img
-from skimage.filters.rank import modal
-from skimage.morphology import rectangle, remove_small_objects
 from tensorflow import keras
 
-from Utils.segmentation import full_prediction
-from Model import UNetST, dice_coeff, dice_loss, weighted_bce, combined
+from Models.Model import UNetST
 from dataset_target import CalibrationTargets
 
 train_data_dir = 'Target detection/Dataset Target/Train/Images_patches'

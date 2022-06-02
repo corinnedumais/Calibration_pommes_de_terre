@@ -1,8 +1,6 @@
 import keras
 import numpy as np
 import cv2
-import os
-from PIL import Image
 from keras_preprocessing.image import load_img
 from matplotlib import pyplot as plt
 from skimage.filters.rank import modal
@@ -10,7 +8,7 @@ from skimage.measure import label
 from skimage.morphology import rectangle, remove_small_objects
 
 from segmentation import full_prediction
-from Model import dice_coeff, dice_loss, combined
+from Models.Model import dice_coeff, dice_loss, combined
 
 mask_model = keras.models.load_model('Trained Models/mask_final.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 contours_model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
