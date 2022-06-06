@@ -58,19 +58,20 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
     overlap controlled by the parameter step.
     """
     assert mode in ['Train', 'Eval'], 'Argument passed for mode must be either Train or Eval.'
+    path = os.path.join(directory, 'Dataset Target', mode)
 
     # Generate patches for all the images
     id_number = 1
-    for im_name, mask_name in zip(sorted(os.listdir(os.path.join(directory, 'Dataset Target', mode, 'Images'))),
-                                  sorted(os.listdir(os.path.join(directory, 'Dataset Target', mode, 'Masks')))):
+    for im_name, mask_name in zip(sorted(os.listdir(os.path.join(path, 'Images'))),
+                                  sorted(os.listdir(os.path.join(path, 'Masks')))):
 
-        img = cv2.imread(os.path.join(directory, 'Dataset Target', mode, 'Images', im_name))
+        img = cv2.imread(os.path.join(path, 'Images', im_name))
         img = Image.fromarray(img)
         img = img.resize((2048, 1536), Image.ANTIALIAS)
         img = np.array(img)
         img_crop = view_as_windows(img, window_shape=window_shape, step=step)
 
-        mask = cv2.imread(os.path.join(directory,  'Dataset Target', mode, 'Masks', mask_name), cv2.IMREAD_GRAYSCALE)
+        mask = cv2.imread(os.path.join(path, 'Masks', mask_name), cv2.IMREAD_GRAYSCALE)
         mask = Image.fromarray((mask/255).astype(np.uint8))
         mask = mask.resize((2048, 1536), Image.ANTIALIAS)
         mask = np.array(mask)
@@ -79,11 +80,13 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
         for i in range(0, img_crop.shape[0]):
             for ii in range(0, img_crop.shape[1]):
 
+                # Get image patch and its 3 rotations
                 im_saved = img_crop[i, ii, 0, :, :, :] * random.uniform(0.7, 1)
                 im90 = np.rot90(im_saved)
                 im180 = np.rot90(im90)
                 im270 = np.rot90(im180)
 
+                # Get mask and its 3 rotations
                 mask_saved = mask_crop[i, ii, :, :]
                 mask90 = np.rot90(mask_saved)
                 mask180 = np.rot90(mask90)
@@ -92,15 +95,15 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
                 if np.all((mask_saved == 0)):
                     continue
                 else:
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number:04}.png'), im_saved)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+1:04}.png'), im90)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+2:04}.png'), im180)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Images_patches', f'img_{id_number+3:04}.png'), im270)
+                    cv2.imwrite(os.path.join(path, 'Images_patches', f'img_{id_number:04}.png'), im_saved)
+                    cv2.imwrite(os.path.join(path, 'Images_patches', f'img_{id_number+1:04}.png'), im90)
+                    cv2.imwrite(os.path.join(path, 'Images_patches', f'img_{id_number+2:04}.png'), im180)
+                    cv2.imwrite(os.path.join(path, 'Images_patches', f'img_{id_number+3:04}.png'), im270)
 
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number:04}.png'), mask_saved)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+1:04}.png'), mask90)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+2:04}.png'), mask180)
-                    cv2.imwrite(os.path.join(directory, 'Dataset Target', mode, 'Masks_patches', f'mask_{id_number+3:04}.png'), mask270)
+                    cv2.imwrite(os.path.join(path, 'Masks_patches', f'mask_{id_number:04}.png'), mask_saved)
+                    cv2.imwrite(os.path.join(path, 'Masks_patches', f'mask_{id_number+1:04}.png'), mask90)
+                    cv2.imwrite(os.path.join(path, 'Masks_patches', f'mask_{id_number+2:04}.png'), mask180)
+                    cv2.imwrite(os.path.join(path, 'Masks_patches', f'mask_{id_number+3:04}.png'), mask270)
 
                     id_number += 4
 
