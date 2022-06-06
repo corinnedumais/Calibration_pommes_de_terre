@@ -32,7 +32,7 @@ def identify_targets(model, img_path):
     # plt.axis('off')
     # plt.show()
 
-    pred = remove_small_objects(label(pred), 500)
+    pred = remove_small_objects(label(pred), 1500)
     pred[pred != 0] = 255
     pred = pred.astype(np.uint8)
 
@@ -48,7 +48,7 @@ def identify_targets(model, img_path):
         rect = cv2.minAreaRect(contour)
         width, height = rect[1][0], rect[1][1]
         # Check if ressembles enough a square
-        if 0.85 < width / height < 1.15:
+        if 0.75 < width / height < 1.25:
             sizes.append((width + height) / 2)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
@@ -62,14 +62,14 @@ def identify_targets(model, img_path):
     return color_img, mm_per_pixel
 
 
-model = keras.models.load_model('Trained Models/targets2.h5',
+model = keras.models.load_model('Trained Models/targets4.h5',
                                 custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-file_name = '25.jpg'
-target_im, conversion_factor = identify_targets(model, f'Target detection/Dataset Target/Train/Images/{file_name}')
+file_name = 'test3.jpg'
+target_im, conversion_factor = identify_targets(model, f'Target detection/Dataset Target/Test/{file_name}')
 
 print(conversion_factor)
 cv2.putText(target_im, f'Facteur de conversion: {conversion_factor:.4} mm/px', (15, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 0, 255), 2, cv2.LINE_AA)
-# cv2.imwrite(f'res{file_name}', target_im)
-show(target_im)
+cv2.imwrite(f'res{file_name}', target_im)
+# show(target_im)
 
