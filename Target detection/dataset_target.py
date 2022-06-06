@@ -107,7 +107,7 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
 
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
-
+#
 # for i in range(0, 950, 25):
 #     fig, axes = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
 #     ax = axes.ravel()

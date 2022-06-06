@@ -4,9 +4,14 @@ import os
 
 import random
 
+from keras_preprocessing.image import load_img
+from matplotlib import pyplot as plt
+from skimage.filters.rank import modal
+from skimage.morphology import rectangle
 from tensorflow import keras
 
-from Models.Model import UNetST
+from Models.Model import UNetST, dice_loss, dice_coeff
+from Utils.segmentation import full_prediction
 from dataset_target import CalibrationTargets
 
 train_data_dir = 'Target detection/Dataset Target/Train/Images_patches'
@@ -49,16 +54,16 @@ train_gen = CalibrationTargets(batch_size, img_size, train_input_img_paths, trai
 val_gen = CalibrationTargets(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets2.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets3.h5", save_best_only=True)]
 
 model = UNetST(input_size=(256, 256, 3), output_classes=1).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-# model = keras.models.load_model('Trained Models/targets1.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+# model = keras.models.load_model('Trained Models/targets2.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
-# path = 'Target detection/Dataset Target/Eval/Images/03.jpg'
+# path = 'Target detection/Dataset Target/Eval/Images/05.jpg'
 # pred = full_prediction(model, path, 256, (2048, 1536))
 # pred = modal(pred, rectangle(3, 3))
 # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))

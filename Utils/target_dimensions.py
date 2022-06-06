@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 from PIL import Image
+from scipy.interpolate import splprep, splev
 from skimage.filters.rank import modal
 from skimage.measure import label
 from skimage.morphology import rectangle, remove_small_objects
@@ -19,20 +21,24 @@ def identify_targets(model, img_path):
     color_img = cv2.cvtColor(np.array(color_img), cv2.COLOR_RGB2BGR)
 
     # Get target prediction
+    s_time = time.time()
     pred = full_prediction(model, img_path, patch_size=256, resize=(2048, 1536))
+    print(time.time()-s_time)
+    s_time = time.time()
     pred = modal(pred, rectangle(5, 5))
+    print(time.time() - s_time)
 
-    plt.imshow(pred)
-    plt.axis('off')
-    plt.show()
+    # plt.imshow(pred)
+    # plt.axis('off')
+    # plt.show()
 
     pred = remove_small_objects(label(pred), 500)
     pred[pred != 0] = 255
     pred = pred.astype(np.uint8)
 
-    plt.imshow(pred)
-    plt.axis('off')
-    plt.show()
+    # plt.imshow(pred)
+    # plt.axis('off')
+    # plt.show()
 
     # Get contours
     contours, _ = cv2.findContours(pred.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -56,10 +62,14 @@ def identify_targets(model, img_path):
     return color_img, mm_per_pixel
 
 
-model = keras.models.load_model('Trained Models/targets1.h5',
+model = keras.models.load_model('Trained Models/targets2.h5',
                                 custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-target_im, conversion_factor = identify_targets(model, 'Target detection/Dataset Target/Eval/Images/03.jpg')
+file_name = '25.jpg'
+target_im, conversion_factor = identify_targets(model, f'Target detection/Dataset Target/Train/Images/{file_name}')
 
 print(conversion_factor)
+cv2.putText(target_im, f'Facteur de conversion: {conversion_factor:.4} mm/px', (15, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 0, 255), 2, cv2.LINE_AA)
+# cv2.imwrite(f'res{file_name}', target_im)
 show(target_im)
+
