@@ -139,7 +139,7 @@ def generate_masks(root_dir: str, annotations_file: str):
                 x, y = p['all_points_y'], p['all_points_x']
                 # Get indexes of pixels inside the polygon and set them to 1
                 rr, cc = polygon(x, y)
-                mask[rr, cc] = 255
+                mask[rr, cc] = 1
 
             cv2.imwrite(f"Target detection/Dataset Target/Eval/Masks/{a['filename'][:2]}.png", mask)
             # if f"{a['filename'][:2]}_.jpg" in os.listdir(root_dir):
@@ -171,13 +171,13 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
         for i in range(0, img_crop.shape[0]):
             for ii in range(0, img_crop.shape[1]):
 
-                im_file = os.path.join(directory, 'Images_patches', f'img_{id_number:04}.png')
+                im_file = os.path.join(directory, 'TrainImages', f'img_{id_number:04}.png')
                 im_saved = img_crop[i, ii, 0, :, :, :] * random.uniform(0.7, 1)
 
                 contour_file = os.path.join(directory, 'TrainContours', f'cnt_{id_number:04}.png')
                 contour_saved = contour_crop[i, ii, :, :]
 
-                mask_file = os.path.join(directory, 'Masks_patches', f'mask_{id_number:04}.png')
+                mask_file = os.path.join(directory, 'TrainMasks', f'mask_{id_number:04}.png')
                 mask_saved = mask_crop[i, ii, :, :]
 
                 if np.all((mask_saved == 0)):
@@ -198,34 +198,34 @@ def flip_im(img_name):
 
 
 # generate_masks('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
-# GenerateDataset('SolanumTuberosum')
-#
-# dir_pdt = 'SolanumTuberosum'
+GenerateDataset('PDT detection/SolanumTuberosum')
 
-# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
-#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-#     ax = axes.ravel()
-#
-#     im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
-#     mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
-#     cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
-#
-#     ax[0].imshow(im)
-#     ax[1].imshow(mask)
-#     ax[2].imshow(cnt)
-#     plt.show()
-#
-# for i in range(0, 3000, 50):
-#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-#     ax = axes.ravel()
-#
-#     im = Image.open(f'SolanumTuberosum/Images_patches/img_{i+1:04}.png')
-#     mask = Image.open(f'SolanumTuberosum/Masks_patches/mask_{i+1:04}.png')
-#     cnt = Image.open(f'SolanumTuberosum/TrainContours/cnt_{i+1:04}.png')
-#
-#     ax[0].imshow(im)
-#     ax[1].imshow(mask)
-#     ax[2].imshow(cnt)
-#     plt.show()
+dir_pdt = 'PDT detection/SolanumTuberosum'
+
+for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
+                                            sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
+                                            sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
+    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+    ax = axes.ravel()
+
+    im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
+    mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
+    cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
+
+    ax[0].imshow(im)
+    ax[1].imshow(mask)
+    ax[2].imshow(cnt)
+    plt.show()
+
+for i in range(0, 3000, 50):
+    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+    ax = axes.ravel()
+
+    im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i+1:04}.png')
+    mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i+1:04}.png')
+    cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i+1:04}.png')
+
+    ax[0].imshow(im)
+    ax[1].imshow(mask)
+    ax[2].imshow(cnt)
+    plt.show()
