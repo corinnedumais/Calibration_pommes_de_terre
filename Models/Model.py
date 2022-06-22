@@ -9,7 +9,8 @@ from contextlib import redirect_stdout
 import tensorflow as tf
 from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, Activation, Lambda, add
 from keras.models import Model
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.regularizers import l2
 from keras.losses import binary_crossentropy
 
 # To avoid the display of certain warnings
@@ -43,39 +44,24 @@ class UNetST:
         self.act = 'relu'
 
         # Set optimizer and loss function
-        self.optimizer = Adam(learning_rate=1e-4)
+        self.optimizer = Adam(learning_rate=1e-3)
         self.loss = binary_crossentropy
 
     def Conv2D_block(self, input_tensor, channels, kernel_size, kernel_initializer, padding='same'):
         """
         Method to add 2 convolutional layers
         """
-        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, padding=padding)(input_tensor)
+        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.001), padding=padding)(input_tensor)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)
 
-        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, padding=padding)(x)
+        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.001), padding=padding)(x)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)
 
         return x
-
-    def dilated_bottleneck(self, input_db):
-        dilate1 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=1, kernel_initializer='he_normal')(input_db)
-        b7 = BatchNormalization()(dilate1)
-        dilate2 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=2, kernel_initializer='he_normal')(b7)
-        b8 = BatchNormalization()(dilate2)
-        dilate3 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=4, kernel_initializer='he_normal')(b8)
-        b9 = BatchNormalization()(dilate3)
-        dilate4 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=8, kernel_initializer='he_normal')(b9)
-        b10 = BatchNormalization()(dilate4)
-        dilate5 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=16, kernel_initializer='he_normal')(b10)
-        b11 = BatchNormalization()(dilate5)
-        dilate6 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=32, kernel_initializer='he_normal')(b11)
-        dilate_all_added = add([dilate1, dilate2, dilate3, dilate4, dilate5, dilate6])
-        return dilate_all_added
 
     def build(self):
         """
@@ -103,9 +89,8 @@ class UNetST:
         conv4 = self.Conv2D_block(pool3, 8*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 5 (bottleneck)
-        conv5 = self.dilated_bottleneck(conv4)
-        # pool4 = MaxPooling2D()(conv4)
-        # conv5 = self.Conv2D_block(pool4, 16*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
+        pool4 = MaxPooling2D()(conv4)
+        conv5 = self.Conv2D_block(pool4, 16*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 6
         up1 = UpSampling2D()(conv5)
