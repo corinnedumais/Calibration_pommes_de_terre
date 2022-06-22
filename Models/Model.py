@@ -7,9 +7,9 @@ import os
 from contextlib import redirect_stdout
 
 import tensorflow as tf
-from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, Activation, Lambda
+from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, Activation, Lambda, add
 from keras.models import Model
-from tensorflow.keras.optimizers import Adam
+from keras.optimizers import Adam
 from keras.losses import binary_crossentropy
 
 # To avoid the display of certain warnings
@@ -23,7 +23,7 @@ class UNetST:
     Class representing a U-Net neural network to segment potatoes
     """
 
-    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=32, batchnorm=True):
+    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=16, batchnorm=True):
         """
         Parameters:
             input_size (tuple): Size of the input data (height, width, channels)
@@ -62,6 +62,21 @@ class UNetST:
 
         return x
 
+    def dilated_bottleneck(self, input_db):
+        dilate1 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=1, kernel_initializer='he_normal')(input_db)
+        b7 = BatchNormalization()(dilate1)
+        dilate2 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=2, kernel_initializer='he_normal')(b7)
+        b8 = BatchNormalization()(dilate2)
+        dilate3 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=4, kernel_initializer='he_normal')(b8)
+        b9 = BatchNormalization()(dilate3)
+        dilate4 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=8, kernel_initializer='he_normal')(b9)
+        b10 = BatchNormalization()(dilate4)
+        dilate5 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=16, kernel_initializer='he_normal')(b10)
+        b11 = BatchNormalization()(dilate5)
+        dilate6 = Conv2D(8*self.channels, 3, activation='relu', padding='same', dilation_rate=32, kernel_initializer='he_normal')(b11)
+        dilate_all_added = add([dilate1, dilate2, dilate3, dilate4, dilate5, dilate6])
+        return dilate_all_added
+
     def build(self):
         """
         Method to build and compile the U-Net neural network.
@@ -72,8 +87,8 @@ class UNetST:
 
         # Block 1 (input)
         inputs = Input(self.input_size)
-        s = Lambda(lambda x: x / 255)(inputs)
-        conv1 = self.Conv2D_block(s, self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
+        # inputs = Lambda(lambda x: x / 255)(inputs)
+        conv1 = self.Conv2D_block(inputs, self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 2
         pool1 = MaxPooling2D()(conv1)
@@ -88,8 +103,9 @@ class UNetST:
         conv4 = self.Conv2D_block(pool3, 8*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 5 (bottleneck)
-        pool4 = MaxPooling2D()(conv4)
-        conv5 = self.Conv2D_block(pool4, 16*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
+        conv5 = self.dilated_bottleneck(conv4)
+        # pool4 = MaxPooling2D()(conv4)
+        # conv5 = self.Conv2D_block(pool4, 16*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 6
         up1 = UpSampling2D()(conv5)
@@ -115,6 +131,7 @@ class UNetST:
         conv9 = Conv2D(self.output_classes, kernel_size=(1, 1), activation='sigmoid', padding='same')(conv9)
 
         model = Model(inputs=inputs, outputs=conv9)
+
         model.compile(optimizer=self.optimizer, loss=dice_loss, metrics=['accuracy', dice_coeff])
 
         return model

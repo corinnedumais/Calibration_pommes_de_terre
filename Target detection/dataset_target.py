@@ -1,4 +1,4 @@
-
+import json
 import os
 import random
 from typing import Tuple, List
@@ -6,6 +6,9 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 from PIL import Image
+from matplotlib.image import imread
+from skimage.draw import polygon
+from skimage.io import imread
 from matplotlib import pyplot as plt
 from skimage.util.shape import view_as_windows
 from tensorflow import keras
@@ -38,18 +41,39 @@ class CalibrationTargets(keras.utils.Sequence):
 
         random.seed(self.seed)
         x = np.zeros((self.batch_size,) + self.img_size + (3,), dtype="float32")
-        for j, path in enumerate(batch_input_img_paths):
-            # load img in rgb
-            img = load_img(path, target_size=self.img_size)
-            x[j] = img
-
-        random.seed(self.seed)
         y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")
-        for j, target_path in enumerate(batch_target_paths):
+
+        for j, (path, target_path) in enumerate(zip(batch_input_img_paths, batch_target_paths)):
+            img = load_img(path, target_size=self.img_size)
             masks = np.expand_dims(load_img(target_path, target_size=self.img_size, color_mode="grayscale"), -1)
+            x[j] = img
             y[j] = masks
 
-        return x, y
+        return x/255, y
+
+
+def generate_masks_targets(root_dir: str, annotations_file: str):
+    """
+    Function to generate the binary masks from json annotation files. Saves the masks as PNG files in 'Masks' subdirectory.
+    """
+    annotations = json.load(open(os.path.join(root_dir, annotations_file)))
+    annotations = list(annotations.values())
+
+    for a in annotations:
+        if a['regions']:
+            polygons = [r['shape_attributes'] for r in a['regions']]
+            image_path = os.path.join(root_dir, a['filename'])
+            image = imread(image_path)
+            height, width = image.shape[:2]
+
+            mask = np.zeros([height, width], dtype=np.uint8)
+            for p in polygons:
+                x, y = p['all_points_y'], p['all_points_x']
+                # Get indexes of pixels inside the polygon and set them to 1
+                rr, cc = polygon(x, y)
+                mask[rr, cc] = 255
+
+            cv2.imwrite(f"Target detection/Dataset Target/Train/Masks/{a['filename'][:-4]}.png", mask)
 
 
 def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int], step: int, mode='Train'):
@@ -107,6 +131,8 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
 
                     id_number += 4
 
+
+# generate_masks_targets('Target detection/Dataset Target/Train/Images', 'target_detection_train_json.json')
 
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')

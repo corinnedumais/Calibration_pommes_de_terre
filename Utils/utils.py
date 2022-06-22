@@ -1,29 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import cv2
+from skimage.filters.rank import modal
+from skimage.measure import label
+from skimage.morphology import rectangle, remove_small_objects
 
-
-def pixels_to_mm(px_measure: float, original_resolution: int, resize_factor: float) -> float:
-    """
-    Function to convert a the length of pixel segment to millimeters (mm).
-
-    Since 1 inch = 25.4 mm, conversion is done using resolution in ppi, with a correction to account for resizing.
-
-    Parameters
-    ----------
-    px_measure: float
-                Measure to convert to mm.
-    original_resolution: int
-                Resolution (horizontal and vertical) of original image in ppi (pixels per inches)
-    resize_factor: float
-                Factor by which the image was resized.
-
-    Returns
-    -------
-    float
-          Measure in millimeters.
-    """
-    return px_measure * 25.4/original_resolution * resize_factor
+from Utils.segmentation import full_prediction
 
 
 def normalize_dataset(dataset: np.ndarray) -> np.ndarray:

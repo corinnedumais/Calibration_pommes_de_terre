@@ -13,11 +13,11 @@ np.random.seed(9)
 
 # Define parameters
 train_ratio = 0.8
-variety = 'mountain_gem'
+variety = 'burbank'
 assert variety in ['burbank', 'mountain_gem']
 
 # Load dataset and normalize data
-dataset = np.loadtxt(f'SolanumTuberosum/Dimensions/{variety}.txt', skiprows=2)
+dataset = np.loadtxt(f'PDT detection/SolanumTuberosum/Dimensions/{variety}.txt', skiprows=2)
 data, labels = normalize_dataset(dataset.T[:2].T), dataset.T[2]
 
 # Shuffle data and target
@@ -60,6 +60,7 @@ for split_train, split_test in kfold.split(data, labels):
 
     # Fit data to model
     history = model.fit(data[split_train], labels[split_train], batch_size=4, epochs=200, verbose=0)
+    model.save(f'Trained Models/{variety}_weight.h5')
 
     # Generate generalization metrics
     preds = [i[0] for i in model.predict(data[split_test])]
@@ -76,6 +77,7 @@ for split_train, split_test in kfold.split(data, labels):
     mae.append(mean_abs)
     # Increase fold number
     fold_no = fold_no + 1
+    break
 
 
 tinv = lambda p, df: abs(t.ppf(p / 2, df))
@@ -86,9 +88,9 @@ print(f"NSE  (95%): ({np.mean(nse):.2f}+/-{tinv(0.05, len(nse) - 2) * np.std(nse
 
 
 # Load the model and evaluate
-# model = keras.models.load_model(f"Trained Models/{variety}_weight.h5")
-# preds_train = model.predict(train)
-# preds_test = model.predict(test)
+model = keras.models.load_model(f"Trained Models/{variety}_weight.h5")
+preds_train = model.predict(train)
+preds_test = model.predict(test)
 #
 # print(f"Mean train prediction error: {np.sqrt(model.evaluate(train, train_labels)):.2f} g")
 # print(f"Mean test prediction error: {np.sqrt(model.evaluate(test, test_labels)):.2f} g")
@@ -99,10 +101,10 @@ print(f"NSE  (95%): ({np.mean(nse):.2f}+/-{tinv(0.05, len(nse) - 2) * np.std(nse
 # for label, pred in zip(train_labels, preds_train):
 #     print(f'Expected value: {label:.1f} g      Predicted value: {pred[0]:.1f} g')
 #
-# print('\nTEST EVALUATION')
-# for label, pred in zip(test_labels, preds_test):
-#     print(f'Expected value: {label:.1f} g      Predicted value: {pred[0]:.1f} g')
-#
+print('\nTEST EVALUATION')
+for label, pred in zip(test_labels, preds_test):
+    print(f'Expected value: {label:.1f} g      Predicted value: {pred[0]:.1f} g')
+
 # # Linear regression
 # res_train = linregress(train_labels, [i[0] for i in preds_train])
 # res_test = linregress(test_labels, [i[0] for i in preds_test])

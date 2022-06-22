@@ -30,7 +30,7 @@ val_target_paths = sorted([os.path.join(eval_target_dir, file)
 
 batch_size = 8
 img_size = (256, 256)
-epochs = 15
+epochs = 30
 
 random.Random(1337).shuffle(train_input_img_paths)
 random.Random(1337).shuffle(train_target_paths)
@@ -54,13 +54,13 @@ train_gen = CalibrationTargets(batch_size, img_size, train_input_img_paths, trai
 val_gen = CalibrationTargets(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets3.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets_8c_no_norm.h5", save_best_only=True)]
 
-model = UNetST(input_size=(256, 256, 3), output_classes=1).build()
-model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
+# model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=8).build()
+# model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-# model = keras.models.load_model('Trained Models/targets2.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model = keras.models.load_model('Trained Models/targets_8c_no_norm.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
 # path = 'Target detection/Dataset Target/Eval/Images/05.jpg'
@@ -75,22 +75,22 @@ model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_g
 # plt.show()
 
 ### TO CHECK PATCH PREDICTIONS ON VALIDATION DATA ###
-# val_preds = model.predict(val_gen)
-# for i in range(0, len(val_preds), 25):
-#     im = val_preds[i] > 0.5
-#     fig, axes = plt.subplots(ncols=3, figsize=(10, 4))
-#     ax = axes.ravel()
-#
-#     ax[0].imshow(load_img(val_input_img_paths[i], color_mode='rgb'), cmap='gray')
-#     # ax[0].set_title('Image originale')
-#     ax[1].imshow(load_img(val_target_paths[i], color_mode='grayscale'), cmap='gray')
-#     # ax[1].set_title('Vérité terrain')
-#     ax[2].imshow(im, cmap='gray')
-#     # ax[2].set_title('Prédiction du modèle')
-#     ax[0].axis('off')
-#     ax[1].axis('off')
-#     ax[2].axis('off')
-#     plt.tight_layout()
-#     plt.show()
+val_preds = model.predict(val_gen)
+for i in range(0, len(val_preds), 25):
+    im = val_preds[i] > 0.5
+    fig, axes = plt.subplots(ncols=3, figsize=(10, 4))
+    ax = axes.ravel()
+
+    ax[0].imshow(load_img(val_input_img_paths[i], color_mode='rgb'), cmap='gray')
+    # ax[0].set_title('Image originale')
+    ax[1].imshow(load_img(val_target_paths[i], color_mode='grayscale'), cmap='gray')
+    # ax[1].set_title('Vérité terrain')
+    ax[2].imshow(im, cmap='gray')
+    # ax[2].set_title('Prédiction du modèle')
+    ax[0].axis('off')
+    ax[1].axis('off')
+    ax[2].axis('off')
+    plt.tight_layout()
+    plt.show()
     # plt.savefig(f'Results/10-03-2022/prediction{i+1:03}')
     # plt.clf()

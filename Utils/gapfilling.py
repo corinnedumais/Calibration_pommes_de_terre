@@ -60,28 +60,6 @@ def mark_end_points(contours):
     return contours
 
 
-def count_end_points(contours):
-    structure_S = np.zeros((3, 3))
-    structure_S[1, :2] = 1
-    structure_D = np.zeros((3, 3))
-    structure_D[0, 0] = 1
-    structure_D[1, 1] = 1
-    U_structures = []
-    for _ in range(4):
-        U_structures.append(structure_S)
-        structure_S = np.rot90(structure_S)
-        U_structures.append(structure_D)
-        structure_D = np.rot90(structure_D)
-
-    n_end_pts = 0
-    for u in U_structures:
-        end_points = binary_hit_or_miss(contours, structure1=u).astype(np.int)
-        n_end_pts += np.sum(end_points)
-        contours[end_points == 1] = 2
-
-    return n_end_pts
-
-
 def join_pairs(contours, end_points, max_distance):
     pairs = []
     for i, p1 in enumerate(end_points):

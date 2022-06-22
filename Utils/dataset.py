@@ -51,7 +51,7 @@ class SolanumTuberosum(keras.utils.Sequence):
             x[j] = img
             y[j] = masks
 
-        return x, y
+        return x/255, y
 
 
 def GenerateDataset(directory: str):
@@ -67,16 +67,16 @@ def GenerateDataset(directory: str):
     #             img = img.resize(size, Image.ANTIALIAS)
     #             img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'),
     #                      quality=100)
-    #
+
     # # Step 2: Get binary masks and contour masks from jason annotations
     # generate_masks(os.path.join(directory, 'Images'), 'annotations.json')
     # generate_contour_maps(os.path.join(directory, 'Images'), 'annotations.json')
-    #
+
     # # Step 3: Reduce the binary masks and contour maps to the 3 same sizes as the images
     # for filename in os.listdir(os.path.join(directory, 'Masks')):
     #     if filename.endswith(".jpg") or filename.endswith(".png"):
     #         mask = Image.open(os.path.join(directory, 'Masks', filename))
-    #         cnt = np.array(Image.open(os.path.join(directory, "Contours", f"cnt_{filename[:-4]}.png")))
+    #         cnt = np.array(Image.open(os.path.join(directory, "Contours", filename)))
     #         cnt = cv2.cvtColor(cnt, cv2.COLOR_RGB2GRAY) / 255
     #         cnt = Image.fromarray(cnt.astype(np.uint8))
     #         for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
@@ -112,7 +112,7 @@ def generate_contour_maps(directory: str, annotations_file: str):
 
             mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
             mask = cv2.drawContours(mask, contours, -1, (255, 255, 255), 7)
-            cv2.imwrite(f"PDT detection/SolanumTuberosum/Contours/cnt_{a['filename'][:-4]}.png", mask)
+            cv2.imwrite(f"PDT detection/SolanumTuberosum/Contours/{a['filename'][:-4]}.png", mask)
             # if f"{a['filename'][:2]}_.jpg" in os.listdir(directory):
             #     cv2.imwrite(f"SolanumTuberosum/Contours/cnt_{a['filename'][:2]}_.png", mask)
 
@@ -138,7 +138,7 @@ def generate_masks(root_dir: str, annotations_file: str):
                 rr, cc = polygon(x, y)
                 mask[rr, cc] = 1
 
-            cv2.imwrite(f"PDT detection/SolanumTuberosum/Masks/{a['filename'][:2]}.png", mask)
+            cv2.imwrite(f"PDT detection/SolanumTuberosum/Masks/{a['filename'][:-4]}.png", mask)
             # if f"{a['filename'][:2]}_.jpg" in os.listdir(root_dir):
             #     cv2.imwrite(f"SolanumTuberosum/Masks/mask_{a['filename'][2:4]}_.png", mask)
 
@@ -194,10 +194,9 @@ def flip_im(img_name):
     im.save(os.path.join('SolanumTuberosum', 'Images', img_name))
 
 
-# generate_masks('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
 # GenerateDataset('PDT detection/SolanumTuberosum')
 
-dir_pdt = 'PDT detection/SolanumTuberosum'
+# dir_pdt = 'PDT detection/SolanumTuberosum'
 
 # for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
 #                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],

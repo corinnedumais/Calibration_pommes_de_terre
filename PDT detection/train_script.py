@@ -6,16 +6,16 @@ import random
 
 import matplotlib.pyplot as plt
 
-from keras.preprocessing.image import load_img
+from keras.utils import load_img
 from tensorflow import keras
 
-from Models.Model import UNetST
+from Models.Model import UNetST, dice_loss, dice_coeff
 from Utils.dataset import SolanumTuberosum
 
-input_dir = 'SolanumTuberosum/TrainImages'
-masks_dir = 'SolanumTuberosum/TrainMasks'
-contours_dir = 'SolanumTuberosum/TrainContours'
-target_dir = masks_dir
+input_dir = 'PDT detection/SolanumTuberosum/TrainImages'
+masks_dir = 'PDT detection/SolanumTuberosum/TrainMasks'
+contours_dir = 'PDT detection/SolanumTuberosum/TrainContours'
+target_dir = contours_dir
 
 input_img_paths = sorted([os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".png")])
 target_paths = sorted([os.path.join(target_dir, file) for file in os.listdir(target_dir) if file.endswith(".png")])
@@ -43,13 +43,13 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_colors4.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_new_data2.h5", save_best_only=True)]
 
-model = UNetST(input_size=(256, 256, 3), output_classes=1).build()
+model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=32).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-# model = keras.models.load_model('Trained Models/mask_colors.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+# model = keras.models.load_model('Trained Models/mask_new_data2.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
 # path = 'SolanumTuberosum/Test_images/test4.jpg'

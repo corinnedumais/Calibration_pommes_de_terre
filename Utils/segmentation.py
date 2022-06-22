@@ -11,10 +11,8 @@ from matplotlib.colors import ListedColormap
 from skimage.filters.rank import modal
 from skimage.measure import label
 from skimage.morphology import rectangle, remove_small_objects
-from scipy.ndimage import binary_hit_or_miss
 
 from Utils.gapfilling import fill_gaps
-from Utils.utils import pixels_to_mm, show
 
 
 def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple[int, int]) -> np.ndarray:
@@ -51,13 +49,40 @@ def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple
     for i in range(0, image.shape[0], patch_size):  # Steps of 256
         for j in range(0, image.shape[1], patch_size):  # Steps of 256
             single_patch = np.expand_dims(image[i:i + patch_size, j:j + patch_size], axis=0)
-            single_patch_prediction = (trained_model.predict(single_patch) > 0.5).astype(np.uint8)[0, :, :, :]
+            single_patch_prediction = (trained_model.predict(single_patch, verbose=0) > 0.5).astype(np.uint8)[0, :, :, :]
             segm_img[i:i + patch_size, j:j + patch_size, :] += single_patch_prediction
 
     return segm_img[:, :, 0]
 
 
-def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int, resize: Tuple[int, int]) -> Tuple[
+def mm_per_pixel(target_model, img_path):
+    # Get target prediction
+    pred = full_prediction(target_model, img_path=img_path, patch_size=256, resize=(2048, 1536))
+    pred = modal(pred, rectangle(5, 5))
+    pred = remove_small_objects(label(pred), 1500)
+    pred[pred != 0] = 255
+    pred = pred.astype(np.uint8)
+
+    # Get contours
+    contours, _ = cv2.findContours(pred.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    sizes = []
+    cnt = []
+    for contour in contours:
+        # Fit rectangle
+        rect = cv2.minAreaRect(contour)
+        width, height = rect[1][0], rect[1][1]
+        # Check if ressembles enough a square
+        if 0.85 < width / height < 1.15:
+            sizes.append(np.amin([width, height]))
+            cnt.append(contour)
+
+    # Mean size of all detected targets
+    mean_size = np.mean(sizes)
+    mm_per_px = 40 / mean_size
+    return mm_per_px, cnt
+
+
+def segment_potatoes(img_path: str, mask_model, contours_model, target_model, patch_size: int, resize: Tuple[int, int]) -> Tuple[
     np.ndarray, list, list]:
     """
     Function to segment the potatoes from an image using the models trained with UNet architecture.
@@ -88,6 +113,8 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     heights: list
              List of all the objects' heights
     """
+    conv_factor, target_cnt = mm_per_pixel(target_model, img_path)
+
     # Mask and contour predictions
     pred_mask = full_prediction(mask_model, img_path, patch_size, resize)
     pred_contour = full_prediction(contours_model, img_path, patch_size, resize)
@@ -95,6 +122,9 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     # Modal filter to eliminate artifacts at the junction of the predicted tiles
     pred_mask = modal(pred_mask, rectangle(5, 5))
     pred_contour = modal(pred_contour, rectangle(5, 5))
+
+    fig, (ax1, ax2) = plt.subplots(ncols=2)
+    ax1.imshow(pred_mask)
 
     pred_contour = cv2.ximgproc.thinning(pred_contour)/255
     pred_contour = pred_contour.astype(np.uint8)
@@ -105,7 +135,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     ###############################
 
     # start_time = time.time()
-    # pred_contour = fill_gaps(pred_contour, n_iterations=10)
+    pred_contour = fill_gaps(pred_contour, n_iterations=10)
     # print(f'Execution time: {time.time() - start_time: .3f} seconds')
 
     ###############################################
@@ -118,13 +148,12 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
     # Subtraction of the two masks and elimination of negative values
     pred_mask[pred_contour == 1] = 0
 
-    pred_mask = remove_small_objects(label(pred_mask), 4000)
+    pred_mask = remove_small_objects(label(pred_mask), 2000)
     pred_mask[pred_mask != 0] = 255
     pred_mask = pred_mask.astype(np.uint8)
 
-    plt.imshow(pred_mask)
+    ax2.imshow(pred_mask)
     plt.tight_layout()
-    plt.axis('off')
     plt.show()
 
     # Load the image in RGB
@@ -161,15 +190,25 @@ def segment_potatoes(img_path: str, mask_model, contours_model, patch_size: int,
             a, b = round(0.5 * heightE) + 4, round(0.5 * widthE) + 4
             angle = ellipse[2]
 
+            width = widthE * conv_factor
+            height = heightE * conv_factor
+
             # we filter the ellipses to eliminate those who are too small
-            if cv2.contourArea(contour) > 200 and a > 20 and b > 20:
+            if width > 30 and height > 40:
                 cv2.ellipse(color_img, (xc, yc), (b, a), angle, 0, 360, (0, 0, 255), 2)
-                # cv2.putText(color_img, f'{pixels_to_mm(widthE * factor_w, 72, 1.97):.0f} mm', (xc - 25, yc),
-                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
-                # cv2.putText(color_img, f'{pixels_to_mm(heightE * factor_h, 72, 1.97):.0f} mm', (xc - 25, yc + 20),
-                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 0, 128), 2, cv2.LINE_AA)
-                widths.append(widthE)
-                heights.append(heightE)
+                cv2.putText(color_img, f'{width:.0f} mm', (xc - 25, yc),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
+                cv2.putText(color_img, f'{height:.0f} mm', (xc - 25, yc + 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2, cv2.LINE_AA)
+                widths.append(width)
+                heights.append(height)
+
+            for tc in target_cnt:
+                rect = cv2.minAreaRect(tc)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
+                # Draw contour of the target
+                cv2.drawContours(color_img, [box], 0, (0, 128, 255), 2)
 
             cv2.imwrite('preds.png', color_img)
 
