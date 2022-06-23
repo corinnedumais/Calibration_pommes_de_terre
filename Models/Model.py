@@ -44,19 +44,19 @@ class UNetST:
         self.act = 'relu'
 
         # Set optimizer and loss function
-        self.optimizer = Adam(learning_rate=1e-3)
+        self.optimizer = Adam(learning_rate=1e-4)
         self.loss = binary_crossentropy
 
     def Conv2D_block(self, input_tensor, channels, kernel_size, kernel_initializer, padding='same'):
         """
         Method to add 2 convolutional layers
         """
-        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.001), padding=padding)(input_tensor)
+        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.0005), padding=padding)(input_tensor)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)
 
-        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.001), padding=padding)(x)
+        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.0005), padding=padding)(x)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)

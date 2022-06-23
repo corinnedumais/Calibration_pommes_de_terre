@@ -8,7 +8,7 @@ from Utils.segmentation import segment_potatoes
 
 import time
 
-model_mask = keras.models.load_model('Trained Models/mask_new_data.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model_mask = keras.models.load_model('Trained Models/mask_reg_0005.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 model_contour = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 model_target = keras.models.load_model('Trained Models/targets4.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 

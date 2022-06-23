@@ -10,12 +10,12 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from skimage.filters.rank import modal
 from skimage.measure import label
-from skimage.morphology import rectangle, remove_small_objects
+from skimage.morphology import rectangle, remove_small_objects, remove_small_holes
 
 from Utils.gapfilling import fill_gaps
 
 
-def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple[int, int]) -> np.ndarray:
+def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple[int, int], norm_fact) -> np.ndarray:
     """
     Function to make a full prediction on an image.
 
@@ -42,7 +42,7 @@ def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple
     # Open and resize image
     img = Image.open(img_path)
     image = img.resize(resize, Image.ANTIALIAS)
-    image = np.array(image)
+    image = np.array(image)/norm_fact
 
     # Predict each patch and reassemble full image
     segm_img = np.expand_dims(np.zeros(image.shape[:2]), -1)  # Array with zeros to be filled with segmented values
@@ -113,11 +113,12 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     heights: list
              List of all the objects' heights
     """
-    conv_factor, target_cnt = mm_per_pixel(target_model, img_path)
+    # conv_factor, target_cnt = mm_per_pixel(target_model, img_path)
+    conv_factor, target_cnt = 1, []
 
     # Mask and contour predictions
-    pred_mask = full_prediction(mask_model, img_path, patch_size, resize)
-    pred_contour = full_prediction(contours_model, img_path, patch_size, resize)
+    pred_mask = full_prediction(mask_model, img_path, patch_size, resize, 255)
+    pred_contour = full_prediction(contours_model, img_path, patch_size, resize, 1)
 
     # Modal filter to eliminate artifacts at the junction of the predicted tiles
     pred_mask = modal(pred_mask, rectangle(5, 5))
@@ -135,7 +136,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     ###############################
 
     # start_time = time.time()
-    pred_contour = fill_gaps(pred_contour, n_iterations=10)
+    # pred_contour = fill_gaps(pred_contour, n_iterations=12)
     # print(f'Execution time: {time.time() - start_time: .3f} seconds')
 
     ###############################################
@@ -149,6 +150,10 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     pred_mask[pred_contour == 1] = 0
 
     pred_mask = remove_small_objects(label(pred_mask), 2000)
+    pred_mask[pred_mask != 0] = 255
+    pred_mask = pred_mask.astype(np.uint8)
+
+    pred_mask = remove_small_holes(label(pred_mask), 3000)
     pred_mask[pred_mask != 0] = 255
     pred_mask = pred_mask.astype(np.uint8)
 
@@ -194,7 +199,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
             height = heightE * conv_factor
 
             # we filter the ellipses to eliminate those who are too small
-            if width > 30 and height > 40:
+            if width > 20 and height > 20:
                 cv2.ellipse(color_img, (xc, yc), (b, a), angle, 0, 360, (0, 0, 255), 2)
                 cv2.putText(color_img, f'{width:.0f} mm', (xc - 25, yc),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)

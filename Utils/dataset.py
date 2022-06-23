@@ -51,7 +51,7 @@ class SolanumTuberosum(keras.utils.Sequence):
             x[j] = img
             y[j] = masks
 
-        return x/255, y
+        return x / 255, y
 
 
 def GenerateDataset(directory: str):
@@ -73,20 +73,20 @@ def GenerateDataset(directory: str):
     # generate_contour_maps(os.path.join(directory, 'Images'), 'annotations.json')
 
     # # Step 3: Reduce the binary masks and contour maps to the 3 same sizes as the images
-    # for filename in os.listdir(os.path.join(directory, 'Masks')):
-    #     if filename.endswith(".jpg") or filename.endswith(".png"):
-    #         mask = Image.open(os.path.join(directory, 'Masks', filename))
-    #         cnt = np.array(Image.open(os.path.join(directory, "Contours", filename)))
-    #         cnt = cv2.cvtColor(cnt, cv2.COLOR_RGB2GRAY) / 255
-    #         cnt = Image.fromarray(cnt.astype(np.uint8))
-    #         for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
-    #             mask = mask.resize(size, Image.ANTIALIAS)
-    #             cnt = cnt.resize(size, Image.ANTIALIAS)
-    #
-    #             mask.save(os.path.join(directory, 'Resized_masks', f'mask_{filename[:-4]}_{size[0]}_{size[1]}.png'),
-    #                       quality=100)
-    #             cnt.save(os.path.join(directory, 'Resized_contours', f'cnt_{filename[:-4]}_{size[0]}_{size[1]}.png'),
-    #                      quality=100)
+    for filename in os.listdir(os.path.join(directory, 'Masks')):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            mask = Image.open(os.path.join(directory, 'Masks', filename))
+            cnt = np.array(Image.open(os.path.join(directory, "Contours", filename)))
+            cnt = cv2.cvtColor(cnt, cv2.COLOR_RGB2GRAY) / 255
+            cnt = Image.fromarray(cnt.astype(np.uint8))
+            for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
+                mask = mask.resize(size, Image.ANTIALIAS)
+                cnt = cnt.resize(size, Image.ANTIALIAS)
+
+                mask.save(os.path.join(directory, 'Resized_masks', f'mask_{filename[:-4]}_{size[0]}_{size[1]}.png'),
+                          quality=100)
+                cnt.save(os.path.join(directory, 'Resized_contours', f'cnt_{filename[:-4]}_{size[0]}_{size[1]}.png'),
+                         quality=100)
 
     # Step 4: Generate the patches (images, masks and contours) for training
     generate_patches(directory, window_shape=(256, 256, 3), step=128)
@@ -194,34 +194,34 @@ def flip_im(img_name):
     im.save(os.path.join('SolanumTuberosum', 'Images', img_name))
 
 
-# GenerateDataset('PDT detection/SolanumTuberosum')
+#GenerateDataset('PDT detection/SolanumTuberosum')
 
-# dir_pdt = 'PDT detection/SolanumTuberosum'
+dir_pdt = 'PDT detection/SolanumTuberosum'
 
-# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
-#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
-#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-#     ax = axes.ravel()
-#
-#     im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
-#     mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
-#     cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
-#
-#     ax[0].imshow(im)
-#     ax[1].imshow(mask)
-#     ax[2].imshow(cnt)
-#     plt.show()
+#for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
+#                                            sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
+#                                            sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
+#    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#    ax = axes.ravel()
 
-# for i in range(0, 3000, 50):
-#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-#     ax = axes.ravel()
-#
-#     im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i+1:04}.png')
-#     mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i+1:04}.png')
-#     cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i+1:04}.png')
-#
-#     ax[0].imshow(im)
-#     ax[1].imshow(mask)
-#     ax[2].imshow(cnt)
-#     plt.show()
+#    im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
+#    mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
+#    cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
+
+#   ax[0].imshow(im)
+#    ax[1].imshow(mask)
+#    ax[2].imshow(cnt)
+#    plt.show()
+
+#for i in range(0, 3000, 50):
+#    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#    ax = axes.ravel()
+
+#    im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i + 1:04}.png')
+#    mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i + 1:04}.png')
+#    cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i + 1:04}.png')
+
+#    ax[0].imshow(im)
+#    ax[1].imshow(mask)
+#    ax[2].imshow(cnt)
+#    plt.show()
