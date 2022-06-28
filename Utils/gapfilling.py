@@ -6,16 +6,17 @@ from matplotlib import pyplot as plt
 from scipy.ndimage import binary_hit_or_miss
 
 
-def fill_gaps(contours, n_iterations):
+def fill_gaps(contours, n_iterations, display_all_it=False):
     # Locate end points with hit or miss and label them '2' in contour map (0 is background and 1 is skeleton)
     contours = mark_end_points(contours)
 
-    # plt.figure(figsize=(7, 7))
-    # plt.title(f'0 itérations', fontsize=18)
-    # plt.imshow(contours[400:600, 800:1000], cmap=ListedColormap(['#000000', '#ffffff', '#ff0000']))
-    # plt.axis('off')
-    # plt.tight_layout()
-    # plt.show()
+    if display_all_it:
+        plt.figure(figsize=(10, 10))
+        plt.title(f'0 itérations', fontsize=18)
+        plt.imshow(contours, cmap=ListedColormap(['#000000', '#ffffff', '#ff0000']))
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
 
     for n in range(n_iterations):
         # Get position of all end points
@@ -30,12 +31,13 @@ def fill_gaps(contours, n_iterations):
         # Grow each end point
         contours = grow_end_points(contours, end_points)
 
-        # plt.figure(figsize=(7, 7))
-        # plt.title(f'{n + 1} itérations', fontsize=18)
-        # plt.imshow(contours[400:600, 800:1000], cmap=ListedColormap(['#000000', '#ffffff', '#ff0000', '#fff000']))
-        # plt.axis('off')
-        # plt.tight_layout()
-        # plt.show()
+        if display_all_it:
+            plt.figure(figsize=(10, 10))
+            plt.title(f'{n + 1} itérations', fontsize=18)
+            plt.imshow(contours[1000:1250, 1000:1250], cmap=ListedColormap(['#000000', '#ffffff', '#ff0000', '#fff000']))
+            plt.axis('off')
+            plt.tight_layout()
+            plt.show()
 
     return contours
 
@@ -79,45 +81,53 @@ def join_pairs(contours, end_points, max_distance):
                 if c == min_dist[0] or c == min_dist[1]:
                     if p in pairs:
                         pairs.remove(p)
-
     return contours
 
 
 def grow_end_points(contours, end_points):
     for point in end_points:
         current_point = point
-        prev_point = None
+        prev_points = []
         for i in range(15):
             x, y = current_point
             if not (0 < x < contours.shape[0] - 1 and 0 < y < contours.shape[1] - 1):
                 contours[x, y] = 3
                 break
             else:
-                if contours[x - 1, y] != 0 and (x - 1, y) != prev_point:
+                if contours[x - 1, y] != 0 and (x - 1, y) not in prev_points:
                     current_point = (x - 1, y)
-                elif contours[x + 1, y] != 0 and (x + 1, y) != prev_point:
+                elif contours[x + 1, y] != 0 and (x + 1, y) not in prev_points:
                     current_point = (x + 1, y)
-                elif contours[x, y - 1] != 0 and (x, y - 1) != prev_point:
+                elif contours[x, y - 1] != 0 and (x, y - 1) not in prev_points:
                     current_point = (x, y - 1)
-                elif contours[x, y + 1] != 0 and (x, y + 1) != prev_point:
+                elif contours[x, y + 1] != 0 and (x, y + 1) not in prev_points:
                     current_point = (x, y + 1)
-                elif contours[x - 1, y - 1] != 0 and (x - 1, y - 1) != prev_point:
+                elif contours[x - 1, y - 1] != 0 and (x - 1, y - 1) not in prev_points:
                     current_point = (x - 1, y - 1)
-                elif contours[x + 1, y + 1] != 0 and (x + 1, y + 1) != prev_point:
+                elif contours[x + 1, y + 1] != 0 and (x + 1, y + 1) not in prev_points:
                     current_point = (x + 1, y + 1)
-                elif contours[x - 1, y + 1] != 0 and (x - 1, y + 1) != prev_point:
+                elif contours[x - 1, y + 1] != 0 and (x - 1, y + 1) not in prev_points:
                     current_point = (x - 1, y + 1)
-                elif contours[x + 1, y - 1] != 0 and (x + 1, y - 1) != prev_point:
+                elif contours[x + 1, y - 1] != 0 and (x + 1, y - 1) not in prev_points:
                     current_point = (x + 1, y - 1)
-                prev_point = (x, y)
+
+                if len(prev_points) < 2:
+                    prev_points.append((x, y))
+                else:
+                    prev_points.pop(0)
+                    prev_points.append((x, y))
 
         k = 0.8
         xf, yf = int((point[0] - current_point[0]) / k + current_point[0]), int(
             (point[1] - current_point[1]) / k + current_point[1])
         if 0 < xf < contours.shape[0] - 1 and 0 < yf < contours.shape[1] - 1:
             rr, cc = line(point[0], point[1], xf, yf)
+            if 1 in contours[rr, cc] or 3 in contours[rr, cc]:
+                f = 3
+            else:
+                f = 2
             contours[rr, cc] = 3
-            contours[xf, yf] = 2
+            contours[xf, yf] = f
         else:
             contours[point[0], point[1]] = 3
 

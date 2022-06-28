@@ -60,13 +60,13 @@ def GenerateDataset(directory: str):
     truth) from the annotations file, resizes both the images and masks and splits them up in patches of shape 256x256.
     """
     # Step 1: Get training images and resize to 3 different sizes
-    # for filename in os.listdir(os.path.join(directory, 'Images')):
-    #     if filename.endswith(".jpg") or filename.endswith(".png"):
-    #         img = Image.open(os.path.join(directory, 'Images', filename))
-    #         for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
-    #             img = img.resize(size, Image.ANTIALIAS)
-    #             img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'),
-    #                      quality=100)
+    for filename in os.listdir(os.path.join(directory, 'Images')):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            img = Image.open(os.path.join(directory, 'Images', filename))
+            for size in [(1024, 768), (2048, 1536), (3072, 2304)]:
+                img = img.resize(size, Image.ANTIALIAS)
+                img.save(os.path.join(directory, 'Resized_images', f'{filename[:-4]}_{size[0]}_{size[1]}.jpg'),
+                         quality=100)
 
     # # Step 2: Get binary masks and contour masks from jason annotations
     # generate_masks(os.path.join(directory, 'Images'), 'annotations.json')
@@ -194,7 +194,7 @@ def flip_im(img_name):
     im.save(os.path.join('SolanumTuberosum', 'Images', img_name))
 
 
-#GenerateDataset('PDT detection/SolanumTuberosum')
+# GenerateDataset('PDT detection/SolanumTuberosum')
 
 dir_pdt = 'PDT detection/SolanumTuberosum'
 
@@ -213,14 +213,14 @@ dir_pdt = 'PDT detection/SolanumTuberosum'
 #    ax[2].imshow(cnt)
 #    plt.show()
 
-#for i in range(0, 3000, 50):
+# for i in range(0, 3000, 50):
 #    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
 #    ax = axes.ravel()
-
+#
 #    im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i + 1:04}.png')
 #    mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i + 1:04}.png')
 #    cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i + 1:04}.png')
-
+#
 #    ax[0].imshow(im)
 #    ax[1].imshow(mask)
 #    ax[2].imshow(cnt)

@@ -6,12 +6,13 @@ import logging
 import os
 from contextlib import redirect_stdout
 
-import tensorflow as tf
-from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, Activation, Lambda, add
+from keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
+    multiply, add, concatenate, LeakyReLU, ZeroPadding2D, UpSampling2D, BatchNormalization
 from keras.models import Model
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import l2
+from keras.optimizers import Adam
+from keras.regularizers import l2
 from keras.losses import binary_crossentropy
+from keras import backend as K
 
 # To avoid the display of certain warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -24,7 +25,7 @@ class UNetST:
     Class representing a U-Net neural network to segment potatoes
     """
 
-    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=16, batchnorm=True):
+    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=16, batchnorm=False):
         """
         Parameters:
             input_size (tuple): Size of the input data (height, width, channels)
@@ -42,6 +43,8 @@ class UNetST:
         # Parameters for the convolutional layers
         self.init = 'he_normal'
         self.act = 'relu'
+        self.reg = 0.0005
+        self.drop = 0
 
         # Set optimizer and loss function
         self.optimizer = Adam(learning_rate=1e-4)
@@ -51,17 +54,66 @@ class UNetST:
         """
         Method to add 2 convolutional layers
         """
-        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.0005), padding=padding)(input_tensor)
+        x = Conv2D(channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(self.reg), padding=padding)(input_tensor)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)
+        x = Dropout(self.drop)(x)
 
-        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(0.0005), padding=padding)(x)
+        x = Conv2D(filters=channels, kernel_size=kernel_size, kernel_initializer=kernel_initializer, kernel_regularizer=l2(self.reg), padding=padding)(x)
         if self.batchnorm:
             x = BatchNormalization()(x)
         x = Activation(self.act)(x)
 
         return x
+
+    def AttnBlock2D(self, x, g, inter_channel):
+        # Get shapes
+        shape_x = K.int_shape(x)
+        shape_g = K.int_shape(g)
+
+        # Apply convolutions, theta_x has stride 2 so size is compatible with phi_g for concat
+        theta_x = Conv2D(inter_channel, (1, 1), strides=(2, 2), padding='same')(x)
+        phi_g = Conv2D(inter_channel, (1, 1), strides=(1, 1), padding='same')(g)
+
+        # Concatenate and apply activation
+        concat_xg = add([phi_g, theta_x])
+        act_xg = Activation('relu')(concat_xg)
+
+        # Apply convolution to reshape
+        psi = Conv2D(1, (1, 1), strides=(1, 1), padding='same')(act_xg)
+
+        # Apply sigmoid activation
+        sig_xg = Activation('sigmoid')(psi)
+        sig_shape = K.int_shape(sig_xg)
+
+        # Upsample to original size
+        upsample_psi = UpSampling2D(size=(shape_x[1]//sig_shape[1], shape_x[2]//sig_shape[2]))(sig_xg)
+
+        # Multiply
+        y = multiply([upsample_psi, x])
+        result = Conv2D(shape_x[3], (1, 1), padding='same')(y)
+        if self.batchnorm:
+            result = BatchNormalization(result)
+        return result
+
+    def attention_up_and_concat(self, down_layer, layer, data_format='channels_last'):
+
+        if data_format == 'channels_first':
+            in_channel = down_layer.get_shape().as_list()[1]
+        else:
+            in_channel = down_layer.get_shape().as_list()[3]
+
+        up = UpSampling2D(size=(2, 2), data_format=data_format)(down_layer)
+        layer = self.AttnBlock2D(x=layer, g=up, inter_channel=in_channel // 4, data_format=data_format)
+
+        if data_format == 'channels_first':
+            my_concat = Lambda(lambda x: K.concatenate([x[0], x[1]], axis=1))
+        else:
+            my_concat = Lambda(lambda x: K.concatenate([x[0], x[3]], axis=3))
+
+        concate = my_concat([up, layer])
+        return concate
 
     def build(self):
         """
