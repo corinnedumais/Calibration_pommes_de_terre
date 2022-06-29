@@ -6,10 +6,12 @@ import logging
 import os
 from contextlib import redirect_stdout
 
+import tensorflow as tf
+
 from keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
     multiply, add, concatenate, LeakyReLU, ZeroPadding2D, UpSampling2D, BatchNormalization
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.regularizers import l2
 from keras.losses import binary_crossentropy
 from keras import backend as K
@@ -43,7 +45,7 @@ class UNetST:
         # Parameters for the convolutional layers
         self.init = 'he_normal'
         self.act = 'relu'
-        self.reg = 0.0005
+        self.reg = 0
         self.drop = 0
 
         # Set optimizer and loss function
@@ -66,54 +68,6 @@ class UNetST:
         x = Activation(self.act)(x)
 
         return x
-
-    def AttnBlock2D(self, x, g, inter_channel):
-        # Get shapes
-        shape_x = K.int_shape(x)
-        shape_g = K.int_shape(g)
-
-        # Apply convolutions, theta_x has stride 2 so size is compatible with phi_g for concat
-        theta_x = Conv2D(inter_channel, (1, 1), strides=(2, 2), padding='same')(x)
-        phi_g = Conv2D(inter_channel, (1, 1), strides=(1, 1), padding='same')(g)
-
-        # Concatenate and apply activation
-        concat_xg = add([phi_g, theta_x])
-        act_xg = Activation('relu')(concat_xg)
-
-        # Apply convolution to reshape
-        psi = Conv2D(1, (1, 1), strides=(1, 1), padding='same')(act_xg)
-
-        # Apply sigmoid activation
-        sig_xg = Activation('sigmoid')(psi)
-        sig_shape = K.int_shape(sig_xg)
-
-        # Upsample to original size
-        upsample_psi = UpSampling2D(size=(shape_x[1]//sig_shape[1], shape_x[2]//sig_shape[2]))(sig_xg)
-
-        # Multiply
-        y = multiply([upsample_psi, x])
-        result = Conv2D(shape_x[3], (1, 1), padding='same')(y)
-        if self.batchnorm:
-            result = BatchNormalization(result)
-        return result
-
-    def attention_up_and_concat(self, down_layer, layer, data_format='channels_last'):
-
-        if data_format == 'channels_first':
-            in_channel = down_layer.get_shape().as_list()[1]
-        else:
-            in_channel = down_layer.get_shape().as_list()[3]
-
-        up = UpSampling2D(size=(2, 2), data_format=data_format)(down_layer)
-        layer = self.AttnBlock2D(x=layer, g=up, inter_channel=in_channel // 4, data_format=data_format)
-
-        if data_format == 'channels_first':
-            my_concat = Lambda(lambda x: K.concatenate([x[0], x[1]], axis=1))
-        else:
-            my_concat = Lambda(lambda x: K.concatenate([x[0], x[3]], axis=3))
-
-        concate = my_concat([up, layer])
-        return concate
 
     def build(self):
         """

@@ -13,10 +13,10 @@ model_contour = keras.models.load_model('Trained Models/contours_final.h5', cust
 model_target = keras.models.load_model('Trained Models/targets4.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 
-path = 'PDT detection/SolanumTuberosum/Test_images/gallerie_colors.jpg'
+path = 'PDT detection/SolanumTuberosum/Test_images/test11.jpg'
 # path = 'apples.jpg'
 s_time = time.time()
-color_img, d, h = segment_potatoes(path, model_mask, model_contour, model_target, patch_size=256, resize=(2048, 1536))
+color_img, d, h = segment_potatoes(path, model_mask, model_contour, model_target, patch_size=256, resize=(2048, 1536), norm_fact=255)
 print(time.time() - s_time)
 show(color_img, dims=(1000, 750))
 # cv2.imwrite('gallerie_low_res.png', color_img)

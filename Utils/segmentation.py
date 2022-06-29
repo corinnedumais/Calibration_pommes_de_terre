@@ -55,13 +55,16 @@ def full_prediction(trained_model, img_path: str, patch_size: int, resize: Tuple
     return segm_img[:, :, 0]
 
 
-def mm_per_pixel(target_model, img_path):
+def mm_per_pixel(target_model, img_path, norm_fact):
     # Get target prediction
-    pred = full_prediction(target_model, img_path=img_path, patch_size=256, resize=(2048, 1536))
+    pred = full_prediction(target_model, img_path=img_path, patch_size=256, resize=(2048, 1536), norm_fact=1)
     pred = modal(pred, rectangle(5, 5))
     pred = remove_small_objects(label(pred), 1500)
     pred[pred != 0] = 255
     pred = pred.astype(np.uint8)
+
+    # plt.imshow(pred)
+    # plt.show()
 
     # Get contours
     contours, _ = cv2.findContours(pred.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -82,8 +85,8 @@ def mm_per_pixel(target_model, img_path):
     return mm_per_px, cnt
 
 
-def segment_potatoes(img_path: str, mask_model, contours_model, target_model, patch_size: int, resize: Tuple[int, int]) -> Tuple[
-    np.ndarray, list, list]:
+def segment_potatoes(img_path: str, mask_model, contours_model, target_model, patch_size: int, resize: Tuple[int, int],
+                     norm_fact) -> Tuple[np.ndarray, list, list]:
     """
     Function to segment the potatoes from an image using the models trained with UNet architecture.
 
@@ -93,6 +96,8 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
 
     Parameters
     ----------
+    norm_fact: int
+              Factor by which to normalize the image to pass to the trained model
     img_path: str
               Path of the image for the segmentation
     mask_model
@@ -113,21 +118,32 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     heights: list
              List of all the objects' heights
     """
-    # conv_factor, target_cnt = mm_per_pixel(target_model, img_path)
+    # conv_factor, target_cnt = mm_per_pixel(target_model, img_path, norm_fact)
     conv_factor, target_cnt = 1, []
 
     # Mask and contour predictions
-    pred_mask = full_prediction(mask_model, img_path, patch_size, resize, 1)
+    pred_mask = full_prediction(mask_model, img_path, patch_size, resize, norm_fact=norm_fact)
     # pred_contour = full_prediction(contours_model, img_path, patch_size, resize, 255)
 
     # Modal filter to eliminate artifacts at the junction of the predicted tiles
-    pred_mask = modal(pred_mask, rectangle(5, 5))
+    pred_mask = modal(pred_mask, rectangle(7, 7))
     # pred_contour = modal(pred_contour, rectangle(5, 5))
+    plt.imshow(pred_mask)
+    plt.axis('off')
+    plt.show()
+
+    pred_mask = cv2.dilate(pred_mask, np.ones((3, 3), np.uint8), iterations=1)
+    pred_mask = remove_small_objects(label(pred_mask), 2000)
+    pred_mask[pred_mask != 0] = 255
+
+    pred_mask = remove_small_holes(label(pred_mask), 3000)
+    pred_mask[pred_mask != 0] = 255
+    pred_mask = pred_mask.astype(np.uint8) * 255
 
     ### WATERSHED ###
     inverse = cv2.bitwise_not(pred_mask)
     skeleton = cv2.ximgproc.thinning(inverse)/255
-    gap_fill = fill_gaps(skeleton, 25, display_all_it=False)
+    gap_fill = fill_gaps(skeleton, 15, display_all_it=False)
     pred_mask[gap_fill != 0] = 0
     pred_mask = cv2.erode(pred_mask, np.ones((3, 3), np.uint8), iterations=1)
 
@@ -166,14 +182,6 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     # Subtraction of the two masks and elimination of negative values
     # pred_mask[pred_contour == 1] = 0
 
-    pred_mask = remove_small_objects(label(pred_mask), 2000)
-    pred_mask[pred_mask != 0] = 255
-    pred_mask = pred_mask.astype(np.uint8)
-
-    pred_mask = remove_small_holes(label(pred_mask), 3000)
-    pred_mask[pred_mask != 0] = 255
-    pred_mask = pred_mask.astype(np.uint8)
-
     # ax2.imshow(pred_mask)
     # plt.tight_layout()
     # plt.show()
@@ -185,13 +193,6 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
 
     contours, _ = cv2.findContours(pred_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     edges = cv2.cvtColor(pred_mask, cv2.COLOR_GRAY2RGB)
-
-    # colors = [(int(255 * np.random.random()), int(255 * np.random.random()), int(255 * np.random.random())) for _ in
-    #           range(len(contours))]
-    # for i, color in enumerate(colors):
-    #     cv2.drawContours(edges, contours, i, color=color, thickness=2)
-    # plt.imshow(edges)
-    # plt.show()
 
     # Locate the edges
     contours, _ = cv2.findContours(pred_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

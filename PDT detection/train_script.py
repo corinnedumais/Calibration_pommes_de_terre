@@ -5,12 +5,15 @@ import os
 import random
 
 import matplotlib.pyplot as plt
+from skimage.filters.rank import modal
+from skimage.morphology import rectangle
 
 from tensorflow.keras.utils import load_img
 from tensorflow import keras
 
-from Models.Model import UNetST, dice_loss, dice_coeff
+from Models.Model import UNetST, dice_loss, dice_coeff, combined
 from Utils.dataset import SolanumTuberosum
+from Utils.segmentation import full_prediction
 
 input_dir = 'PDT detection/SolanumTuberosum/TrainImages'
 masks_dir = 'PDT detection/SolanumTuberosum/TrainMasks'
@@ -43,17 +46,17 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_reg_0005_8c.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_no_cnt.h5", save_best_only=True)]
 
-model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=8).build()
-model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
+# model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=16).build()
+# model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-# model = keras.models.load_model('Trained Models/mask_new_data2.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model = keras.models.load_model('Trained Models/mask_no_cnt.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
-# path = 'SolanumTuberosum/Test_images/test4.jpg'
-# pred = full_prediction(model, path, 256, (2048, 1536))
+# path = 'PDT detection/SolanumTuberosum/Test_images/gallerie_colors.jpg'
+# pred = full_prediction(model, path, 256, (2048, 1536), 255)
 # pred = modal(pred, rectangle(3, 3))
 # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))
 # ax1.imshow(load_img(path, color_mode='rgb'), cmap='gray')
@@ -81,5 +84,5 @@ for i in range(len(val_preds)):
     ax[2].axis('off')
     plt.tight_layout()
     plt.show()
-#     # plt.savefig(f'Results/10-03-2022/prediction{i+1:03}')
-#     # plt.clf()
+    # plt.savefig(f'Results/10-03-2022/prediction{i+1:03}')
+    # plt.clf()
