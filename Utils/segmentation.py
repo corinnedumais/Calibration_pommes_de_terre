@@ -63,8 +63,8 @@ def mm_per_pixel(target_model, img_path, norm_fact):
     pred[pred != 0] = 255
     pred = pred.astype(np.uint8)
 
-    # plt.imshow(pred)
-    # plt.show()
+    plt.imshow(pred)
+    plt.show()
 
     # Get contours
     contours, _ = cv2.findContours(pred.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -143,7 +143,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     ### WATERSHED ###
     inverse = cv2.bitwise_not(pred_mask)
     skeleton = cv2.ximgproc.thinning(inverse)/255
-    gap_fill = fill_gaps(skeleton, 15, display_all_it=False)
+    gap_fill = fill_gaps(skeleton, 5, display_all_it=False)
     pred_mask[gap_fill != 0] = 0
     pred_mask = cv2.erode(pred_mask, np.ones((3, 3), np.uint8), iterations=1)
 
@@ -217,12 +217,12 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
             height = heightE * conv_factor
 
             # we filter the ellipses to eliminate those who are too small
-            if width > 20 and height > 20:
+            if width > 25 and height > 25:
                 cv2.ellipse(color_img, (xc, yc), (b, a), angle, 0, 360, (0, 0, 255), 2)
-                cv2.putText(color_img, f'{width:.0f} mm', (xc - 25, yc),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
-                cv2.putText(color_img, f'{height:.0f} mm', (xc - 25, yc + 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2, cv2.LINE_AA)
+                # cv2.putText(color_img, f'{width:.0f} mm', (xc - 25, yc),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 205, 50), 2, cv2.LINE_AA)
+                # cv2.putText(color_img, f'{height:.0f} mm', (xc - 25, yc + 20),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2, cv2.LINE_AA)
                 widths.append(width)
                 heights.append(height)
 

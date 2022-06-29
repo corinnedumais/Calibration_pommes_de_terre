@@ -8,13 +8,13 @@ from contextlib import redirect_stdout
 
 import tensorflow as tf
 
-from keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
+from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
     multiply, add, concatenate, LeakyReLU, ZeroPadding2D, UpSampling2D, BatchNormalization
-from keras.models import Model
-from keras.optimizers import Adam, SGD
-from keras.regularizers import l2
-from keras.losses import binary_crossentropy
-from keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.keras import backend as K
 
 # To avoid the display of certain warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -45,7 +45,7 @@ class UNetST:
         # Parameters for the convolutional layers
         self.init = 'he_normal'
         self.act = 'relu'
-        self.reg = 0
+        self.reg = 0.0005
         self.drop = 0
 
         # Set optimizer and loss function

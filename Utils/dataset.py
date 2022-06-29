@@ -150,6 +150,7 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
     """
     # Generate patches for all the images
     id_number = 1
+    count = 0
     for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(directory, 'Resized_images'))),
                                                 sorted(os.listdir(os.path.join(directory, 'Resized_masks'))),
                                                 sorted(os.listdir(os.path.join(directory, 'Resized_contours')))):
@@ -167,6 +168,7 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
 
         for i in range(0, img_crop.shape[0]):
             for ii in range(0, img_crop.shape[1]):
+                count += 1
 
                 im_file = os.path.join(directory, 'TrainImages', f'img_{id_number:04}.png')
                 im_saved = img_crop[i, ii, 0, :, :, :] * random.uniform(0.7, 1)
@@ -185,6 +187,7 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
                     cv2.imwrite(mask_file, mask_saved)
                     cv2.imwrite(contour_file, contour_saved)
                     id_number += 1
+    print(count)
 
 
 def flip_im(img_name):
@@ -195,34 +198,34 @@ def flip_im(img_name):
     im.save(os.path.join('SolanumTuberosum', 'Images', img_name))
 
 
-GenerateDataset('PDT detection/SolanumTuberosum')
-
-dir_pdt = 'PDT detection/SolanumTuberosum'
-
-for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
-                                           sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
-                                           sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
-   fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-   ax = axes.ravel()
-
-   im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
-   mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
-   cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
-
-   ax[0].imshow(im)
-   ax[1].imshow(mask)
-   ax[2].imshow(cnt)
-   plt.show()
-
-for i in range(0, 4000, 100):
-    fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
-    ax = axes.ravel()
-
-    im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i + 1:04}.png')
-    mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i + 1:04}.png')
-    cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i + 1:04}.png')
-
-    ax[0].imshow(im)
-    ax[1].imshow(mask)
-    ax[2].imshow(cnt)
-    plt.show()
+# GenerateDataset('PDT detection/SolanumTuberosum')
+#
+# dir_pdt = 'PDT detection/SolanumTuberosum'
+#
+# for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images')))[::3],
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks')))[::3],
+#                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_contours')))[::3]):
+#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#     ax = axes.ravel()
+#
+#     im = Image.open(os.path.join(dir_pdt, 'Resized_images', im_name))
+#     mask = Image.open(os.path.join(dir_pdt, 'Resized_masks', mask_name))
+#     cnt = Image.open(os.path.join(dir_pdt, 'Resized_contours', contour_name))
+#
+#     ax[0].imshow(im)
+#     ax[1].imshow(mask)
+#     ax[2].imshow(cnt)
+#     plt.show()
+#
+# for i in range(0, 4000, 100):
+#     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
+#     ax = axes.ravel()
+#
+#     im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i + 1:04}.png')
+#     mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i + 1:04}.png')
+#     cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i + 1:04}.png')
+#
+#     ax[0].imshow(im)
+#     ax[1].imshow(mask)
+#     ax[2].imshow(cnt)
+#     plt.show()

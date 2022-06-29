@@ -46,13 +46,14 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_no_cnt.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_new+.h5", save_best_only=True)]
 
-# model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=16).build()
-# model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
+model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=16).build()
+model = keras.models.load_model('Trained Models/mask_new.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-model = keras.models.load_model('Trained Models/mask_no_cnt.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model = keras.models.load_model('Trained Models/mask_new.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
 # path = 'PDT detection/SolanumTuberosum/Test_images/gallerie_colors.jpg'
