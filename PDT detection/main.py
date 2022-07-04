@@ -12,9 +12,9 @@ import time
 model_contour = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 model_target = keras.models.load_model('Trained Models/targets4.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-models_mask = ['mask_blue_gray_bg', 'mask_colors', 'mask_+5pics', 'mask_+5pics_1ep']
+models_mask = ['mask_blue_gray_bg', 'mask_colors', 'mask_+5pics', 'mask_colors++']
 norm_factors = [1, 255, 255, 255]
-path = 'PDT detection/SolanumTuberosum/Test_images/test15.jpg'
+path = 'PDT detection/SolanumTuberosum/Test_images/test13.jpg'
 
 fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
 ax = axes.ravel()
@@ -26,8 +26,7 @@ for i, (model_name, f) in enumerate(zip(models_mask, norm_factors)):
     ax[i].axis('off')
     ax[i].set_title(model_name)
 plt.tight_layout()
-fig.savefig('test_15.png', dpi=500)
-
+fig.savefig('test13.png', dpi=500)
 # show(color_img, dims=(1000, 750))
 # cv2.imwrite('gallerie_low_res.png', color_img)
 
