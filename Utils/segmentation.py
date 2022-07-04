@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-from typing import Tuple
+from typing import Tuple, Any, List, Union
 
 import cv2
 import numpy as np
@@ -86,7 +86,7 @@ def mm_per_pixel(target_model, img_path, norm_fact):
 
 
 def segment_potatoes(img_path: str, mask_model, contours_model, target_model, patch_size: int, resize: Tuple[int, int],
-                     norm_fact) -> Tuple[np.ndarray, list, list]:
+                     norm_fact) -> Tuple[Any, List, List, Any]:
     """
     Function to segment the potatoes from an image using the models trained with UNet architecture.
 
@@ -117,9 +117,13 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
                List of all the objects' diameters
     heights: list
              List of all the objects' heights
+    copy_mask: np.ndarray
+             Segmentation mask
     """
     # conv_factor, target_cnt = mm_per_pixel(target_model, img_path, norm_fact)
     conv_factor, target_cnt = 1, []
+    # if len(target_cnt) == 0:
+    #     conv_factor = 1
 
     # Mask and contour predictions
     pred_mask = full_prediction(mask_model, img_path, patch_size, resize, norm_fact=norm_fact)
@@ -128,9 +132,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     # Modal filter to eliminate artifacts at the junction of the predicted tiles
     pred_mask = modal(pred_mask, rectangle(7, 7))
     # pred_contour = modal(pred_contour, rectangle(5, 5))
-    plt.imshow(pred_mask)
-    plt.axis('off')
-    plt.show()
+    copy_mask = pred_mask.copy()
 
     pred_mask = cv2.dilate(pred_mask, np.ones((3, 3), np.uint8), iterations=1)
     pred_mask = remove_small_objects(label(pred_mask), 2000)
@@ -150,11 +152,11 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     inverse[inverse == 0] = 0.5
     inverse[skeleton != 0] = 0
 
-    fig, axes = plt.subplots(ncols=2, figsize=(12, 7))
-    ax = axes.ravel()
-    ax[0].imshow(inverse)
-    ax[1].imshow(pred_mask)
-    plt.show()
+    # fig, axes = plt.subplots(ncols=2, figsize=(12, 7))
+    # ax = axes.ravel()
+    # ax[0].imshow(inverse)
+    # ax[1].imshow(pred_mask)
+    # plt.show()
     #################
 
     # fig, (ax1, ax2) = plt.subplots(ncols=2)
@@ -233,6 +235,6 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
                 # Draw contour of the target
                 cv2.drawContours(color_img, [box], 0, (0, 128, 255), 2)
 
-            cv2.imwrite('preds.png', color_img)
+            # cv2.imwrite('preds.png', color_img)
 
-    return color_img, widths, heights
+    return color_img, widths, heights, copy_mask
