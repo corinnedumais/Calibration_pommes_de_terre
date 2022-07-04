@@ -26,10 +26,11 @@ assert len(input_img_paths) == len(target_paths), 'Number of targets and images 
 
 batch_size = 8
 img_size = (256, 256)
-epochs = 1
+epochs = 20
 
 # Split our img paths into a training and a validation set
-val_samples = 400
+val_ratio = 0.2
+val_samples = int(val_ratio * len(input_img_paths))
 
 random.Random(1339).shuffle(input_img_paths)
 random.Random(1339).shuffle(target_paths)
@@ -46,7 +47,7 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_+5pics_1ep.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/mask_colors++_avpool.h5", save_best_only=True)]
 
 model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=16).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
