@@ -14,7 +14,8 @@ model_target = keras.models.load_model('Trained Models/targets4.h5', custom_obje
 
 models_mask = ['mask_blue_gray_bg', 'mask_colors', 'mask_+5pics', 'mask_colors++']
 norm_factors = [1, 255, 255, 255]
-path = 'PDT detection/SolanumTuberosum/Test_images/test13.jpg'
+name = 'test15'
+path = f'PDT detection/SolanumTuberosum/Test_images/{name}.jpg'
 
 fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
 ax = axes.ravel()
@@ -26,7 +27,7 @@ for i, (model_name, f) in enumerate(zip(models_mask, norm_factors)):
     ax[i].axis('off')
     ax[i].set_title(model_name)
 plt.tight_layout()
-fig.savefig('test13.png', dpi=500)
+fig.savefig(f'Results/{name}.png', dpi=500)
 # show(color_img, dims=(1000, 750))
 # cv2.imwrite('gallerie_low_res.png', color_img)
 
