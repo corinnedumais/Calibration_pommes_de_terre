@@ -145,7 +145,7 @@ def segment_potatoes(img_path: str, mask_model, contours_model, target_model, pa
     ### WATERSHED ###
     inverse = cv2.bitwise_not(pred_mask)
     skeleton = cv2.ximgproc.thinning(inverse)/255
-    gap_fill = fill_gaps(skeleton, 5, display_all_it=False)
+    gap_fill = fill_gaps(skeleton, 15, display_all_it=False)
     pred_mask[gap_fill != 0] = 0
     pred_mask = cv2.erode(pred_mask, np.ones((3, 3), np.uint8), iterations=1)
 
