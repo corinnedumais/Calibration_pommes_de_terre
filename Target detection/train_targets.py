@@ -4,6 +4,7 @@ import os
 
 import random
 
+import numpy as np
 from keras_preprocessing.image import load_img
 from matplotlib import pyplot as plt
 from skimage.filters.rank import modal
@@ -37,14 +38,6 @@ random.Random(1337).shuffle(train_target_paths)
 random.Random(1337).shuffle(val_input_img_paths)
 random.Random(1337).shuffle(val_target_paths)
 
-# Split our img paths into a training and a validation set
-# val_samples = 400
-#
-# random.Random(1337).shuffle(input_img_paths)
-# random.Random(1337).shuffle(target_paths)
-# train_input_img_paths, train_target_paths = input_img_paths[:-val_samples], target_paths[:-val_samples]
-# val_input_img_paths, val_target_paths = input_img_paths[-val_samples:], target_paths[-val_samples:]
-
 # Verify shapes
 print("Number of samples for training:", len(train_input_img_paths))
 print("Number of samples for validation:", len(val_input_img_paths))
@@ -54,10 +47,10 @@ train_gen = CalibrationTargets(batch_size, img_size, train_input_img_paths, trai
 val_gen = CalibrationTargets(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets_8c_no_norm.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets.h5", save_best_only=True)]
 
-# model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=8).build()
-# model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
+model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=8, batchnorm=False).build()
+model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 model = keras.models.load_model('Trained Models/targets_8c_no_norm.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})

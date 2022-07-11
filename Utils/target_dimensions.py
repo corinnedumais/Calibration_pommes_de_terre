@@ -21,7 +21,7 @@ def identify_targets(model, img_path):
     color_img = cv2.cvtColor(np.array(color_img), cv2.COLOR_RGB2BGR)
 
     # Get target prediction
-    pred = full_prediction(model, img_path, patch_size=256, resize=(2048, 1536))
+    pred = full_prediction(model, img_path, patch_size=256, resize=(2048, 1536), norm_fact=255)
     pred = modal(pred, rectangle(5, 5))
 
     pred = remove_small_objects(label(pred), 1500)
@@ -41,11 +41,13 @@ def identify_targets(model, img_path):
         width, height = rect[1][0], rect[1][1]
         # Check if ressembles enough a square
         if 0.75 < width / height < 1.25:
-            sizes.append((width + height) / 2)
+            min_dim = np.amin([width, height])
+            sizes.append(min_dim)
+            rect = (rect[0], (min_dim, min_dim), rect[2])
             box = cv2.boxPoints(rect)
             box = np.int0(box)
             # Draw contour of the target
-            cv2.drawContours(color_img, [box], 0, (0, 255, 0), 2)
+            cv2.drawContours(color_img, [box], 0, (0, 255, 0), 3)
 
     # Mean size of all detected targets
     mean_size = np.mean(sizes)
@@ -54,13 +56,13 @@ def identify_targets(model, img_path):
     return color_img, mm_per_pixel
 
 
-model = keras.models.load_model('Trained Models/targets_8c_no_norm.h5',
+model = keras.models.load_model('Trained Models/targets.h5',
                                 custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-for i in range(1, 9):
-    file_name = f'{i:02}.jpg'
+for i in range(9, 10):
+    file_name = f'test{i}.jpg'
     s_time = time.time()
-    target_im, conversion_factor = identify_targets(model, f'Target detection/Dataset Target/Eval/Images/{file_name}')
+    target_im, conversion_factor = identify_targets(model, f'PDT detection/SolanumTuberosum/Test_images/{file_name}')
     print(time.time() - s_time)
 
     # print(conversion_factor)

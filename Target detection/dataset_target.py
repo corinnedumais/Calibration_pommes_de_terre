@@ -73,7 +73,7 @@ def generate_masks_targets(root_dir: str, annotations_file: str):
                 rr, cc = polygon(x, y)
                 mask[rr, cc] = 255
 
-            cv2.imwrite(f"Target detection/Dataset Target/Train/Masks/{a['filename'][:-4]}.png", mask)
+            cv2.imwrite(f"Target detection/Dataset Target/Eval/Masks/{a['filename'][:-4]}.png", mask)
 
 
 def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int], step: int, mode='Train'):
@@ -132,7 +132,7 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
                     id_number += 4
 
 
-# generate_masks_targets('Target detection/Dataset Target/Train/Images', 'target_detection_train_json.json')
+# generate_masks_targets('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
 
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
