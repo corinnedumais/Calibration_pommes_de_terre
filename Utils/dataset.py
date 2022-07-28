@@ -76,23 +76,23 @@ def GenerateDataset(directory: str):
     # generate_contour_maps(os.path.join(directory, 'Images'), 'annotations.json')
     #
     # # Step 3: Reduce the binary masks and contour maps to the 3 same sizes as the images
-    # for filename in os.listdir(os.path.join(directory, 'Masks')):
-    #     if filename.endswith(".jpg") or filename.endswith(".png"):
-    #         mask = Image.open(os.path.join(directory, 'Masks', filename))
-    #         cnt = np.array(Image.open(os.path.join(directory, "Contours", filename)))
-    #         cnt = cv2.cvtColor(cnt, cv2.COLOR_RGB2GRAY) / 255
-    #         cnt = Image.fromarray(cnt.astype(np.uint8))
-    #         for size in [(1024, 768), (2048, 1536)]:
-    #             mask = mask.resize(size, Image.ANTIALIAS)
-    #             cnt = cnt.resize(size, Image.ANTIALIAS)
-    #
-    #             mask.save(os.path.join(directory, 'Resized_masks', f'mask_{filename[:-4]}_{size[0]}_{size[1]}.png'),
-    #                       quality=100)
-    #             cnt.save(os.path.join(directory, 'Resized_contours', f'cnt_{filename[:-4]}_{size[0]}_{size[1]}.png'),
-    #                      quality=100)
+    for filename in os.listdir(os.path.join(directory, 'Masks')):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            mask = Image.open(os.path.join(directory, 'Masks', filename))
+            cnt = np.array(Image.open(os.path.join(directory, "Contours", filename)))
+            cnt = cv2.cvtColor(cnt, cv2.COLOR_RGB2GRAY) / 255
+            cnt = Image.fromarray(cnt.astype(np.uint8))
+            for size in [(1024, 768), (2048, 1536)]:
+                mask = mask.resize(size, Image.ANTIALIAS)
+                cnt = cnt.resize(size, Image.ANTIALIAS)
+
+                mask.save(os.path.join(directory, 'Resized_masks', f'mask_{filename[:-4]}_{size[0]}_{size[1]}.png'),
+                          quality=100)
+                cnt.save(os.path.join(directory, 'Resized_contours', f'cnt_{filename[:-4]}_{size[0]}_{size[1]}.png'),
+                         quality=100)
 
     # Step 4: Generate the patches (images, masks and contours) for training
-    generate_patches(directory, window_shape=(512, 512, 3), step=256)
+    generate_patches(directory, window_shape=(256, 256, 3), step=128)
 
 
 def generate_contour_maps(directory: str, annotations_file: str):
@@ -187,7 +187,7 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
 
                 mask_file = os.path.join(directory, 'TrainMasks', f'mask_{id_number:04}.png')
                 mask_saved = mask_crop[i, ii, :, :]
-                mask_saved[contour_saved == 1] = 0
+                # mask_saved[contour_saved == 1] = 0
 
                 if np.all((mask_saved == 0)) and False:
                     continue

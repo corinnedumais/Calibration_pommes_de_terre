@@ -8,13 +8,13 @@ from contextlib import redirect_stdout
 
 import tensorflow as tf
 
-from keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
+from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, Concatenate, Activation, Add, \
     multiply, add, concatenate, LeakyReLU, ZeroPadding2D, UpSampling2D, BatchNormalization, AveragePooling2D
-from keras.models import Model
-from keras.optimizers import Adam, SGD
-from keras.regularizers import l2
-from keras.losses import binary_crossentropy
-from keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.keras import backend as K
 
 # To avoid the display of certain warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -27,7 +27,7 @@ class UNetST:
     Class representing a U-Net neural network to segment potatoes
     """
 
-    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=16, batchnorm=False):
+    def __init__(self, input_size, output_classes, kernel_size=(3, 3), channels=16, batchnorm=False, reg=0.):
         """
         Parameters:
             input_size (tuple): Size of the input data (height, width, channels)
@@ -45,7 +45,7 @@ class UNetST:
         # Parameters for the convolutional layers
         self.init = 'he_normal'
         self.act = 'relu'
-        self.reg = 0
+        self.reg = reg
         self.drop = 0
 
         # Set optimizer and loss function
@@ -83,19 +83,19 @@ class UNetST:
         conv1 = self.Conv2D_block(inputs, self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 2
-        pool1 = AveragePooling2D()(conv1)
+        pool1 = MaxPooling2D()(conv1)
         conv2 = self.Conv2D_block(pool1, 2*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 3
-        pool2 = AveragePooling2D()(conv2)
+        pool2 = MaxPooling2D()(conv2)
         conv3 = self.Conv2D_block(pool2, 4*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 4
-        pool3 = AveragePooling2D()(conv3)
+        pool3 = MaxPooling2D()(conv3)
         conv4 = self.Conv2D_block(pool3, 8*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 5 (bottleneck)
-        pool4 = AveragePooling2D()(conv4)
+        pool4 = MaxPooling2D()(conv4)
         conv5 = self.Conv2D_block(pool4, 16*self.channels, kernel_size=self.kernel_size, kernel_initializer=self.init)
 
         # Block 6

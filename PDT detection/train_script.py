@@ -13,7 +13,8 @@ from tensorflow import keras
 
 from Models.Model import UNetST, dice_loss, dice_coeff, combined
 from Utils.dataset import SolanumTuberosum
-from Utils.segmentation import full_prediction
+from Utils.segmentation import full_prediction, segment_potatoes
+from Utils.utils import show
 
 input_dir = 'PDT detection/SolanumTuberosum/TrainImages'
 masks_dir = 'PDT detection/SolanumTuberosum/TrainMasks'
@@ -25,8 +26,13 @@ target_paths = sorted([os.path.join(target_dir, file) for file in os.listdir(tar
 assert len(input_img_paths) == len(target_paths), 'Number of targets and images must be equal'
 
 batch_size = 4
-img_size = (512, 512)
-epochs = 10
+img_size = (256, 256)
+epochs = 30
+channels = 16
+reg = 0.0001
+bn = False
+
+model_name = f'model3_{channels}c_bs{batch_size}_{epochs}ep_BN{bn}_reg{reg}.h5'
 
 # Split our img paths into a training and a validation set
 val_ratio = 0.2
@@ -47,13 +53,14 @@ train_gen = SolanumTuberosum(batch_size, img_size, train_input_img_paths, train_
 val_gen = SolanumTuberosum(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/masks_artshapes_512.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/masks_no_cnt.h5", save_best_only=True),
+             keras.callbacks.TensorBoard(log_dir=f'logs/{model_name}')]
 
-# model = UNetST(input_size=(512, 512, 3), output_classes=1, channels=16).build()
-# model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
+model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=16, batchnorm=bn, reg=reg).build()
+model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-model = keras.models.load_model('Trained Models/masks_artshapes_512.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model = keras.models.load_model('Trained Models/mask_no_cnt.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
 # path = 'PDT detection/SolanumTuberosum/Test_images/gallerie_colors.jpg'

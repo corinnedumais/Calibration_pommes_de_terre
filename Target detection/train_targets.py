@@ -11,8 +11,10 @@ from skimage.filters.rank import modal
 from skimage.morphology import rectangle
 from tensorflow import keras
 
-from Models.Model import UNetST, dice_loss, dice_coeff
-from Utils.segmentation import full_prediction
+from Models.Model import UNetST, dice_loss, dice_coeff, combined
+from Utils.segmentation import segment_potatoes
+from Utils.target_dimensions import identify_targets
+from Utils.utils import show
 from dataset_target import CalibrationTargets
 
 train_data_dir = 'Target detection/Dataset Target/Train/Images_patches'
@@ -29,9 +31,9 @@ val_input_img_paths = sorted([os.path.join(eval_data_dir, file)
 val_target_paths = sorted([os.path.join(eval_target_dir, file)
                            for file in os.listdir(eval_target_dir) if file.endswith(".png")])
 
-batch_size = 8
+batch_size = 4
 img_size = (256, 256)
-epochs = 30
+epochs = 50
 
 random.Random(1337).shuffle(train_input_img_paths)
 random.Random(1337).shuffle(train_target_paths)
@@ -47,25 +49,22 @@ train_gen = CalibrationTargets(batch_size, img_size, train_input_img_paths, trai
 val_gen = CalibrationTargets(batch_size, img_size, val_input_img_paths, val_target_paths)
 
 # Define callbacks to use during training
-callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets.h5", save_best_only=True)]
+callbacks = [keras.callbacks.ModelCheckpoint("Trained Models/targets_2.h5", save_best_only=True)]
 
 model = UNetST(input_size=(256, 256, 3), output_classes=1, channels=8, batchnorm=False).build()
 model.fit(train_gen, batch_size=batch_size, epochs=epochs, validation_data=val_gen, shuffle=True, callbacks=callbacks)
 
 # model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-model = keras.models.load_model('Trained Models/targets_8c_no_norm.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model = keras.models.load_model('Trained Models/targets.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
-# path = 'Target detection/Dataset Target/Eval/Images/05.jpg'
-# pred = full_prediction(model, path, 256, (2048, 1536))
-# pred = modal(pred, rectangle(3, 3))
-# fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))
-# ax1.imshow(load_img(path, color_mode='rgb'), cmap='gray')
-# ax1.axis('off')
-# ax2.imshow(pred, cmap='gray')
-# ax2.axis('off')
-# plt.tight_layout()
-# plt.show()
+model_mask = keras.models.load_model('Trained Models/mask_yellow.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model_contour = keras.models.load_model('Trained Models/cnt_yellow.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
+model_target = keras.models.load_model('Trained Models/targets.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+
+for i in range(13, 15):
+    file_name = f'test{i}.jpg'
+    target_im, conversion_factor = identify_targets(model, f'PDT detection/SolanumTuberosum/Test_images/{file_name}')
+    show(target_im, dims=(600, 800))
 
 ### TO CHECK PATCH PREDICTIONS ON VALIDATION DATA ###
 val_preds = model.predict(val_gen)
