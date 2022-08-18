@@ -4,35 +4,28 @@ import keras
 from matplotlib import pyplot as plt
 
 from Utils.utils import show
-from Models.Model import dice_loss, combined, dice_coeff
+from Models.Model import dice_loss, combined, dice_coeff, weighted_bce
 from Utils.segmentation import segment_potatoes
 
 import time
 
-model_contour = keras.models.load_model('Trained Models/cnt_yellow.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
-model_target = keras.models.load_model('Trained Models/targets.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+model_contour = keras.models.load_model('Trained Models/cnt_wbce_8c_bs4_100ep_BNFalse_reg0.0005.h5', custom_objects={'weighted_bce': weighted_bce, 'dice_coeff': dice_coeff})
+model_target = keras.models.load_model('Trained Models/targets4.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
 
-models_mask = ['mask_blue_gray_bg', 'mask_colors', 'mask_+5pics', 'mask_colors++']
-norm_factors = [1, 255, 255, 255]
-name = 'test15'
-path = f'PDT detection/SolanumTuberosum/Test_images/test11.jpg'
+models_mask = ['mask_blue_gray_bg', 'mask_8c_bs4_100ep_BNFalse_reg0.0005']
+norm_factors = [1, 255]
+name = 'test11'
+path = f'PDT detection/SolanumTuberosum/Test_images/{name}.jpg'
 f = 255
 
-model_mask = keras.models.load_model(f'Trained Models/mask_yellow.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
-color_img, d, h, mask, mask2 = segment_potatoes(path, model_mask, model_contour, model_target, patch_size=256, resize=(2048, 1536), norm_fact=f)
-show(color_img)
-# fig.savefig(f'Results/{name}.png', dpi=500)
-# show(color_img, dims=(1000, 750))
-# cv2.imwrite('gallerie_low_res.png', color_img)
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
+ax = axes.ravel()
 
-# heights = [pixels_to_mm(h[i], 72, 1.97) for i in range(len(h))]
-# diameters = [pixels_to_mm(d[i], 72, 1.97) for i in range(len(d))]
+for i, (mm, f) in enumerate(zip(models_mask, norm_factors)):
+    model_mask = keras.models.load_model(f'Trained Models/{mm}.h5', custom_objects={'combined': combined, 'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
+    color_img, d, h, targets, mask = segment_potatoes(path, model_mask, model_contour, model_target, patch_size=256, resize=(2048, 1536), norm_fact=f)
+    ax[i].imshow(mask)
+    ax[i].axis('off')
+    ax[i].set_title(mm)
 
-fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4), sharey='all')
-ax1.hist(h, bins=[50, 70, 90, 110, 130, 150, 170, 190], alpha=0.5, histtype='bar', ec='black')
-ax1.set_xlabel('Largeur [mm]')
-ax2.set_xlabel('Longueur [mm]')
-ax1.set_yticks([0, 5, 10, 15, 20, 25, 30])
-ax2.hist(d, bins=[20, 30, 40, 50, 60, 70, 80, 90, 100], alpha=0.5, histtype='bar', ec='black')
 plt.show()
-
