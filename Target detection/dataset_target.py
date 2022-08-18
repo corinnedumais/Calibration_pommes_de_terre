@@ -133,7 +133,7 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
 
 
 # generate_masks_targets('Target detection/Dataset Target/Train/Images', 'target_detection_train_json.json')
-#
+# generate_masks_targets('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
 # generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
 #
