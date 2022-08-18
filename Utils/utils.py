@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 import numbers
+from collections import OrderedDict
 
-import numpy as np
 import cv2
+import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import linregress
-from skimage.filters.rank import modal
-from skimage.measure import label
-from skimage.morphology import rectangle, remove_small_objects
-
-from Utils.segmentation import full_prediction
 
 
 def normalize_dataset(dataset: np.ndarray) -> np.ndarray:
@@ -58,7 +54,8 @@ def show(img, dims=(1536, 2048)):
 
 
 def qqplot(x, y, quantiles=None, interpolation='nearest', ax=None, **kwargs):
-    """Draw a quantile-quantile plot for `x` versus `y`.
+    """
+    Draw a quantile-quantile plot for `x` versus `y`.
 
     Parameters
     ----------
@@ -78,18 +75,6 @@ def qqplot(x, y, quantiles=None, interpolation='nearest', ax=None, **kwargs):
     interpolation : {‘linear’, ‘lower’, ‘higher’, ‘midpoint’, ‘nearest’}
         Specify the interpolation method used to find quantiles when `quantiles`
         is an int or None. See the documentation for numpy.quantile().
-
-    rug : bool, optional
-        If True, draw a rug plot representing both samples on the horizontal and
-        vertical axes. If False, no rug plot is drawn.
-
-    rug_length : float in [0, 1], optional
-        Specifies the length of the rug plot lines as a fraction of the total
-        vertical or horizontal length.
-
-    rug_kwargs : dict of keyword arguments
-        Keyword arguments to pass to matplotlib.axes.Axes.axvline() and
-        matplotlib.axes.Axes.axhline() when drawing rug plots.
 
     kwargs : dict of keyword arguments
         Keyword arguments to pass to matplotlib.axes.Axes.scatter() when drawing
@@ -121,7 +106,32 @@ def qqplot(x, y, quantiles=None, interpolation='nearest', ax=None, **kwargs):
 
 
 def show_QQplot_width_length(d, h, real_d, real_h, variety):
+    """
+    Function to format and display QQ plots for both width and length.
+
+    X-axis is for reference or 'real' quantiles. Y-axis is for predicted quantiles.
+
+    Parameters
+    ----------
+    d: array-like
+        Predicted diameters
+    h: array-like
+        Predicted heights
+    real_d:
+        Reference diameters
+    real_h:
+        Reference heights
+    variety: str
+        variety of potato, should be 'burbank' or 'mountain_gem'
+    """
+
+    assert variety in ['burbank', 'mountain_gem'], 'The variety name given is not valid.'
+    assert len(d) == len(h), 'Arrays for predicted widths and diameters should be of same length.'
+    assert len(real_d) == len(real_h), 'Arrays for reference widths and diameters should be of same length.'
+
     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 5))
+
+    # Plot the width QQ plot, its linear regression and evaluation metrics
     x, y = qqplot(real_d, d, ax=ax1, color='#DB6666', mec='k')
     res = linregress(x, y)
     ax1.plot(x, [res.slope * i + res.intercept for i in x], 'tab:blue', label=f'y=ax+b\n'
@@ -133,12 +143,13 @@ def show_QQplot_width_length(d, h, real_d, real_h, variety):
     ax1.set_title(f'Q-Q plot pour la largeur ({variety})')
     ax1.legend(loc=4)
 
+    # Plot the length QQ plot, its linear regression and evaluation metrics
     x2, y2 = qqplot(real_h, h, ax=ax2, color='#DB6666', mec='k')
     res2 = linregress(x2, y2)
     ax2.plot(x2, [res2.slope * i + res2.intercept for i in x2], 'tab:blue', label=f'y=ax+b\n'
-                                                                                f'a={res2.slope:.2f}$\pm${res2.stderr:.2f}\n'
-                                                                                f'b={res2.intercept:.0f}$\pm${res2.intercept_stderr:.0f}\n'
-                                                                                f'R$^2$={res2.rvalue ** 2:.2f}')
+                                                                                  f'a={res2.slope:.2f}$\pm${res2.stderr:.2f}\n'
+                                                                                  f'b={res2.intercept:.0f}$\pm${res2.intercept_stderr:.0f}\n'
+                                                                                  f'R$^2$={res2.rvalue ** 2:.2f}')
     ax2.set_xlabel('Quantiles théoriques [mm]', fontsize=12)
     ax2.set_ylabel('Quantiles prédits [mm]', fontsize=12)
     ax2.set_title(f'Q-Q plot pour la longueur ({variety})')
@@ -148,22 +159,38 @@ def show_QQplot_width_length(d, h, real_d, real_h, variety):
     plt.show()
 
 
-def get_calibres(d):
-    calibres = {'3po+': 0, '3po': 0, '2 1/2 po': 0, '2 1/4 po': 0, '2po': 0, '1 7/8 po': 0, '1 3/4 po': 0}
-    for mm in d:
-        po = mm / 25.4
-        if po >= 3:
-            calibres['3po+'] += 1
-        elif po >= 2.5:
-            calibres['3po'] += 1
-        elif po >= 2.25:
-            calibres['2 1/2 po'] += 1
-        elif po >= 2:
-            calibres['2 1/4 po'] += 1
-        elif po >= 1.875:
-            calibres['2po'] += 1
-        elif po >= 1.75:
-            calibres['1 7/8 po'] += 1
+def get_calibres(diameters):
+    """
+    Function to get the caliber of a sample from its diameters.
+
+    Parameters
+    ----------
+    diameters: array-like
+        Diameters of all elements of the sample in millimeters.
+
+    Returns
+    -------
+        OrderedDict: calibers
+            Ordered dictionary with each caliber class and the number of objects in each.
+    """
+
+    calibers = OrderedDict([('a) 3 po+', 0), ('b) 3 po', 0), ('c) 2 1/2 po', 0), ('d) 2 1/4 po', 0),
+                            ('e) 2 po', 0), ('f) 1 7/8 po', 0), ('g) 1 3/4 po', 0)])
+    for mm in diameters:
+        # Convert mm to po since caliber classes are named in inches
+        inches = mm / 25.4
+        if inches >= 3:
+            calibers['a) 3 po+'] += 1
+        elif inches >= 2.5:
+            calibers['b) 3 po'] += 1
+        elif inches >= 2.25:
+            calibers['c) 2 1/2 po'] += 1
+        elif inches >= 2:
+            calibers['d) 2 1/4 po'] += 1
+        elif inches >= 1.875:
+            calibers['e) 2 po'] += 1
+        elif inches >= 1.75:
+            calibers['f) 1 7/8 po'] += 1
         else:
-            calibres['1 3/4 po'] += 1
-    return calibres
+            calibers['g) 1 3/4 po'] += 1
+    return calibers
