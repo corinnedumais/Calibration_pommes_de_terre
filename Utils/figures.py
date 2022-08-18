@@ -1,88 +1,69 @@
-import keras
+from os.path import join
+
+import matplotlib.pyplot as plt
 import numpy as np
-import cv2
-from keras_preprocessing.image import load_img
-from matplotlib import pyplot as plt
-from skimage.filters.rank import modal
-from skimage.measure import label
-from skimage.morphology import rectangle, remove_small_objects
 
-from Utils.gapfilling import fill_gaps
-from segmentation import full_prediction, segment_potatoes
-from Models.Model import dice_coeff, dice_loss, combined
+plt.rcParams["font.family"] = "Times New Roman"
 
-mask_model = keras.models.load_model('Trained Models/mask_blue_gray_bg.h5', custom_objects={'dice_loss': dice_loss, 'dice_coeff': dice_coeff})
-contours_model = keras.models.load_model('Trained Models/contours_final.h5', custom_objects={'combined': combined, 'dice_coeff': dice_coeff})
 
-path = f'PDT detection/SolanumTuberosum/Test_images/test1.jpg'
+def make_performance_plots(dice_train, dice_val, acc_train, acc_val, loss_train, loss_val):
+    """
+    Utility function to format and save performance plots.
 
-# Mask and contour predictions
-f = 1
-pred_mask = full_prediction(mask_model, path, 256, resize=(2048, 1536), norm_fact=f)
-pred_contour = full_prediction(contours_model, path, 256, resize=(2048, 1536), norm_fact=f)
+    Plot includes three figures to display training and validation curves for loss, accuracy and dice coefficient.
 
-# Modal filter to eliminate artifacts at the junction of the predicted tiles
-pred_mask = modal(pred_mask, rectangle(5, 5))
-mask = pred_mask.copy()
-pred_contour = modal(pred_contour, rectangle(5, 5))
+    Parameters
+    ----------
+    dice_train: str
+        Name of the text file
+    dice_val: str
+        Name of the text file
+    acc_train: str
+        Name of the text file
+    acc_val: str
+        Name of the text file
+    loss_train: str
+        Name of the text file
+    loss_val: str
+        Name of the text file
 
-pred_contour = cv2.ximgproc.thinning(pred_contour) / 255
-pred_contour = pred_contour.astype(np.uint8)
+    """
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
+    ax = axes.ravel()
 
-pred_contour = remove_small_objects(label(pred_contour), 72)
-pred_contour[pred_contour != 0] = 1
+    ax[0].plot(np.loadtxt(loss_train, skiprows=1, usecols=(1,), delimiter=','),
+               np.loadtxt(loss_train, skiprows=1, usecols=(2,), delimiter=','), label='Entraînement')
+    ax[0].plot(np.loadtxt(loss_val, skiprows=1, usecols=1, delimiter=','),
+               np.loadtxt(loss_val, skiprows=1, usecols=2, delimiter=','), '--', label='Évaluation')
+    ax[0].set_xlabel('Epoch', fontsize=13)
+    ax[0].set_ylabel('Fonction de coût', fontsize=13)
+    ax[0].legend(fontsize=13)
 
-###############################
+    ax[1].plot(np.loadtxt(acc_train, skiprows=1, usecols=1, delimiter=','),
+               np.loadtxt(acc_train, skiprows=1, usecols=2, delimiter=','), label='Entraînement')
+    ax[1].plot(np.loadtxt(acc_val, skiprows=1, usecols=1, delimiter=','),
+               np.loadtxt(acc_val, skiprows=1, usecols=2, delimiter=','), '--', label='Évaluation')
+    ax[1].set_xlabel('Epoch', fontsize=13)
+    ax[1].set_ylabel('Exactitude (accuracy)', fontsize=13)
+    ax[1].legend(fontsize=13)
 
-pred_contour_gp = fill_gaps(pred_contour, n_iterations=10)
-pred_mask_gp = pred_mask.copy()
+    ax[2].plot(np.loadtxt(dice_train, skiprows=1, usecols=1, delimiter=','),
+               np.loadtxt(dice_train, skiprows=1, usecols=2, delimiter=','), label='Entraînement')
+    ax[2].plot(np.loadtxt(dice_val, skiprows=1, usecols=1, delimiter=','),
+               np.loadtxt(dice_val, skiprows=1, usecols=2, delimiter=','), '--', label='Évaluation')
+    ax[2].set_xlabel('Epoch', fontsize=13)
+    ax[2].set_ylabel('Coefficient Dice', fontsize=13)
+    ax[2].legend(fontsize=13)
 
-###############################################
+    plt.tight_layout()
+    fig.savefig('target_performance_plots.png')
 
-# prediction without gap filling
-pred_contour[pred_contour != 0] = 1
-pred_contour = pred_contour.astype(np.float32)
-pred_contour = cv2.dilate(pred_contour, np.ones((3, 3)))
-pred_contour = pred_contour.astype(np.uint8)
 
-pred_mask[pred_contour == 1] = 0
-
-pred_mask = remove_small_objects(label(pred_mask), 4000)
-pred_mask[pred_mask != 0] = 255
-pred_mask = pred_mask.astype(np.uint8)
-
-# prediction with gap filling
-pred_contour_gp[pred_contour_gp != 0] = 1
-pred_contour_gp = pred_contour_gp.astype(np.float32)
-pred_contour_gp = cv2.dilate(pred_contour_gp, np.ones((3, 3)))
-pred_contour_gp = pred_contour_gp.astype(np.uint8)
-
-pred_mask_gp[pred_contour_gp == 1] = 0
-
-pred_mask_gp = remove_small_objects(label(pred_mask_gp), 4000)
-pred_mask_gp[pred_mask_gp != 0] = 255
-pred_mask_gp = pred_mask_gp.astype(np.uint8)
-
-fig, ax = plt.subplots(ncols=5, figsize=(18, 4))
-ax = ax.ravel()
-ax[0].imshow(load_img(path, color_mode='rgb'), cmap='gray')
-ax[1].imshow(mask, cmap='gray')
-ax[2].imshow(pred_mask, cmap='gray')
-ax[3].imshow(pred_mask_gp, cmap='gray')
-color_img, d, h, m = segment_potatoes(path, mask_model, contours_model, None, patch_size=256, resize=(2048, 1536), norm_fact=f)
-ax[4].imshow(color_img)
-
-ax[0].axis('off')
-ax[1].axis('off')
-ax[2].axis('off')
-ax[3].axis('off')
-ax[4].axis('off')
-
-ax[0].set_title('Image originale complète')
-ax[1].set_title('Masque binaire complet prédit')
-ax[2].set_title('Masque - contours')
-ax[3].set_title('Gap filling')
-ax[4].set_title('Ellipses')
-
-plt.tight_layout()
-plt.show()
+dir = 'Courbes'
+type = 'mask'
+make_performance_plots(join(dir, f'{type}_dice_train.csv'),
+                       join(dir, f'{type}_dice_val.csv'),
+                       join(dir, f'{type}_acc_train.csv'),
+                       join(dir, f'{type}_acc_val.csv'),
+                       join(dir, f'{type}_loss_train.csv'),
+                       join(dir, f'{type}_loss_val.csv'))
