@@ -186,9 +186,9 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
                     id_number += 1
 
 
-# GenerateDataset('PDT detection/SolanumTuberosum')
+# GenerateDataset('PDT detection/Dataset Tuberosum')
 #
-# dir_pdt = 'PDT detection/SolanumTuberosum'
+# dir_pdt = 'PDT detection/Dataset Tuberosum'
 # #
 # for im_name, mask_name, contour_name in zip(sorted(os.listdir(os.path.join(dir_pdt, 'Resized_images'))),
 #                                             sorted(os.listdir(os.path.join(dir_pdt, 'Resized_masks'))),
@@ -209,9 +209,9 @@ def generate_patches(directory: str, window_shape: Tuple[int, int, int], step: i
 #     fig, axes = plt.subplots(ncols=3, nrows=1, figsize=(10, 5))
 #     ax = axes.ravel()
 #
-#     im = Image.open(f'PDT detection/SolanumTuberosum/TrainImages/img_{i + 1:04}.png')
-#     mask = Image.open(f'PDT detection/SolanumTuberosum/TrainMasks/mask_{i + 1:04}.png')
-#     cnt = Image.open(f'PDT detection/SolanumTuberosum/TrainContours/cnt_{i + 1:04}.png')
+#     im = Image.open(f'PDT detection/Dataset Tuberosum/TrainImages/img_{i + 1:04}.png')
+#     mask = Image.open(f'PDT detection/Dataset Tuberosum/TrainMasks/mask_{i + 1:04}.png')
+#     cnt = Image.open(f'PDT detection/Dataset Tuberosum/TrainContours/cnt_{i + 1:04}.png')
 #
 #     ax[0].imshow(im)
 #     ax[1].imshow(mask)

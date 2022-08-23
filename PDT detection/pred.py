@@ -30,8 +30,8 @@ color_img, d, h, targets, mask = segment_potatoes(path, model_mask, model_contou
 # plt.imshow(mask)
 # plt.show()
 # Trace QQ plot to compare real and predicted distribution
-# real_h = np.loadtxt(f'PDT detection/SolanumTuberosum/Dimensions/{variety}.txt', usecols=0, skiprows=2)
-# real_d = np.loadtxt(f'PDT detection/SolanumTuberosum/Dimensions/{variety}.txt', usecols=1, skiprows=2)
+# real_h = np.loadtxt(f'PDT detection/Dataset Tuberosum/Dimensions/{variety}.txt', usecols=0, skiprows=2)
+# real_d = np.loadtxt(f'PDT detection/Dataset Tuberosum/Dimensions/{variety}.txt', usecols=1, skiprows=2)
 # show_QQplot_width_length(d=d, h=h, real_d=real_d, real_h=real_h, variety=variety)
 
 # Print other informations regarding the sample
