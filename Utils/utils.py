@@ -101,7 +101,7 @@ def qqplot(x, y, quantiles=None, interpolation='nearest', ax=None, **kwargs):
     mae = np.mean(np.abs(np.subtract(y_quantiles, x_quantiles)))
     ax.errorbar(x_quantiles, y_quantiles, xerr=1, fmt='o', label=f'RMSE:{rmse:.2f}\n'
                                                                  f'MAE:{mae:.2f}\n'
-                                                                 f'Mean bias:{mean_bias:.2f}', **kwargs)
+                                                                 f'MBE:{mean_bias:.2f}', **kwargs)
     return x_quantiles, y_quantiles
 
 
@@ -129,7 +129,7 @@ def show_QQplot_width_length(d, h, real_d, real_h, variety):
     assert len(d) == len(h), 'Arrays for predicted widths and diameters should be of same length.'
     assert len(real_d) == len(real_h), 'Arrays for reference widths and diameters should be of same length.'
 
-    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 5))
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(14, 7))
 
     # Plot the width QQ plot, its linear regression and evaluation metrics
     x, y = qqplot(real_d, d, ax=ax1, color='#DB6666', mec='k')
@@ -138,10 +138,16 @@ def show_QQplot_width_length(d, h, real_d, real_h, variety):
                                                                               f'a={res.slope:.2f}$\pm${res.stderr:.2f}\n'
                                                                               f'b={res.intercept:.0f}$\pm${res.intercept_stderr:.0f}\n'
                                                                               f'R$^2$={res.rvalue ** 2:.2f}')
-    ax1.set_xlabel('Quantiles théoriques [mm]', fontsize=12)
-    ax1.set_ylabel('Quantiles prédits [mm]', fontsize=12)
-    ax1.set_title(f'Q-Q plot pour la largeur ({variety})')
-    ax1.legend(loc=4)
+    ax1.set_xlabel('Quantiles théoriques [mm]', fontsize=16)
+    ax1.set_ylabel('Quantiles prédits [mm]', fontsize=16)
+
+    if variety == 'mountain_gem':
+        variety = 'Mountain Gem'
+    else:
+        variety = 'Burbank'
+
+    ax1.set_title(f'Q-Q plot pour la largeur ({variety})', fontsize=18)
+    ax1.legend(loc=4, fontsize=16)
 
     # Plot the length QQ plot, its linear regression and evaluation metrics
     x2, y2 = qqplot(real_h, h, ax=ax2, color='#DB6666', mec='k')
@@ -150,10 +156,10 @@ def show_QQplot_width_length(d, h, real_d, real_h, variety):
                                                                                   f'a={res2.slope:.2f}$\pm${res2.stderr:.2f}\n'
                                                                                   f'b={res2.intercept:.0f}$\pm${res2.intercept_stderr:.0f}\n'
                                                                                   f'R$^2$={res2.rvalue ** 2:.2f}')
-    ax2.set_xlabel('Quantiles théoriques [mm]', fontsize=12)
-    ax2.set_ylabel('Quantiles prédits [mm]', fontsize=12)
-    ax2.set_title(f'Q-Q plot pour la longueur ({variety})')
-    ax2.legend(loc=4)
+    ax2.set_xlabel('Quantiles théoriques [mm]', fontsize=16)
+    ax2.set_ylabel('Quantiles prédits [mm]', fontsize=16)
+    ax2.set_title(f'Q-Q plot pour la longueur ({variety})', fontsize=18)
+    ax2.legend(loc=4, fontsize=16)
 
     plt.tight_layout()
     plt.show()

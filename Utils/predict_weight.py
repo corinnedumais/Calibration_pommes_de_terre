@@ -15,11 +15,11 @@ np.random.seed(9)
 
 # Define parameters
 train_ratio = 0.8
-variety = 'mountain_gem'
+variety = 'burbank'
 assert variety in ['burbank', 'mountain_gem']
 
 # Load dataset and normalize data
-dataset = np.loadtxt(f'PDT detection/SolanumTuberosum/Dimensions/{variety}.txt', skiprows=2)
+dataset = np.loadtxt(f'PDT detection/Dataset Tuberosum/Dimensions/{variety}.txt', skiprows=2)
 data, labels = normalize_dataset(dataset.T[:2].T), dataset.T[2]
 
 # Shuffle data and target

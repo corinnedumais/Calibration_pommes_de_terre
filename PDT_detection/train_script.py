@@ -12,7 +12,7 @@ from tensorflow.keras.utils import load_img
 from tensorflow import keras
 
 from Models.Model import UNetST, dice_loss, dice_coeff, combined, weighted_bce
-from Utils.dataset import SolanumTuberosum
+from PDT_detection.dataset import SolanumTuberosum
 from Utils.segmentation import full_prediction, segment_potatoes
 from Utils.utils import show
 
@@ -20,7 +20,7 @@ from Utils.utils import show
 class PerformancePlotCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         if epoch % 5 == 0:
-            path = 'PDT detection/Dataset Tuberosum/Test_images/IMG_0103.jpg'
+            path = 'PDT_detection/Dataset Tuberosum/Test_images/IMG_0103.jpg'
             pred = full_prediction(model, path, 256, (2048, 1536), 255)
             pred = modal(pred, rectangle(3, 3))
             fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))
@@ -31,7 +31,7 @@ class PerformancePlotCallback(keras.callbacks.Callback):
             plt.tight_layout()
             plt.title(f'Epoch {epoch}')
             plt.savefig(f'Img_evolution/ep{epoch}_1.png')
-            path = 'PDT detection/Dataset Tuberosum/Test_images/IMG_0101.jpg'
+            path = 'PDT_detection/Dataset Tuberosum/Test_images/IMG_0101.jpg'
             pred = full_prediction(model, path, 256, (2048, 1536), 255)
             pred = modal(pred, rectangle(3, 3))
             fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))
@@ -44,9 +44,9 @@ class PerformancePlotCallback(keras.callbacks.Callback):
             plt.savefig(f'Img_evolution/ep{epoch}_2.png')
 
 
-input_dir = 'PDT detection/Dataset Tuberosum/TrainImages'
-masks_dir = 'PDT detection/Dataset Tuberosum/TrainMasks'
-contours_dir = 'PDT detection/Dataset Tuberosum/TrainContours'
+input_dir = 'PDT_detection/Dataset Tuberosum/TrainImages'
+masks_dir = 'PDT_detection/Dataset Tuberosum/TrainMasks'
+contours_dir = 'PDT_detection/Dataset Tuberosum/TrainContours'
 target_dir = contours_dir
 
 input_img_paths = sorted([os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".png")])
@@ -96,7 +96,7 @@ print(perf)
 
 ### TO VISUALIZE PREDICTION ON FULL TEST IMAGE ###
 # print(model_name)
-# path = 'PDT detection/Dataset Tuberosum/Test_images/test4.jpg'
+# path = 'PDT_detection/Dataset Tuberosum/Test_images/test4.jpg'
 # pred = full_prediction(model, path, 256, (2048, 1536), 255)
 # pred = modal(pred, rectangle(5, 5))
 # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 8))

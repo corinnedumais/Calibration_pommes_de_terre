@@ -194,8 +194,8 @@ def segment_potatoes(img, mask_model, contours_model, target_model, patch_size: 
     pred_contour = remove_small_objects(label(pred_contour), 50)
     pred_contour[pred_contour != 0] = 1
 
-    # pred_contour = fill_gaps(pred_contour, n_iterations=11)  # Uncomment to use gap-filling algorithm
-    # pred_contour[pred_contour != 0] = 1
+    pred_contour = fill_gaps(pred_contour, n_iterations=1)  # Uncomment to use gap-filling algorithm
+    pred_contour[pred_contour != 0] = 1
 
     # Substruction of contours
     pred_contour = pred_contour.astype(np.float32)
@@ -256,20 +256,20 @@ def segment_potatoes(img, mask_model, contours_model, target_model, patch_size: 
             widthE, heightE = ellipse[1]
 
             # Correction factor to account for contour subtraction
-            correction = 6
+            correction = 4
 
             # Ellipse params
             a, b = round(0.5 * heightE + correction / 2), round(0.5 * widthE + correction / 2)
 
             # Corrected measurements in pixels
-            width_px = widthE + correction if variety == 'burbank' else WIDTH + 2
-            height_px = heightE + correction if variety == 'burbank' else HEIGHT + 2
+            width_px = WIDTH + correction if variety == 'burbank' else WIDTH - correction
+            height_px = HEIGHT + correction if variety == 'burbank' else HEIGHT - correction
 
             # Measurements in pixels
             width_mm, height_mm = width_px * conv_factor, height_px * conv_factor
 
             # we filter the ellipses to eliminate those who are too small
-            if 25 < width_mm < 150:
+            if 35 < width_mm < 150:
                 if dev_mode:
                     cv2.ellipse(color_img, (xc, yc), (b, a), ellipse[2], 0, 360, (0, 0, 255), 3)
                     rect = (ellipse[0], (width_px, height_px), ellipse[2])

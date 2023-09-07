@@ -21,7 +21,7 @@ outputs = [model.layers[i].output for i in ixs]
 model = Model(inputs=model.inputs, outputs=outputs)
 
 # load image
-img = tf.keras.utils.load_img('PDT detection\SolanumTuberosum\TrainImages\img_0187.png')
+img = tf.keras.utils.load_img('PDT_detection\SolanumTuberosum\TrainImages\img_0187.png')
 img = np.expand_dims(np.array(img), axis=0)
 
 # get feature map for first hidden layer

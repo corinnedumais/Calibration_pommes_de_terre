@@ -132,10 +132,10 @@ def generate_patches_targets(directory: str, window_shape: Tuple[int, int, int],
                     id_number += 4
 
 
-# generate_masks_targets('Target detection/Dataset Target/Train/Images', 'target_detection_train_json.json')
-# generate_masks_targets('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
-# generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
-# generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
+generate_masks_targets('Target detection/Dataset Target/Train/Images', 'target_detection_train_json.json')
+generate_masks_targets('Target detection/Dataset Target/Eval/Images', 'target_detection_val_json.json')
+generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Train')
+generate_patches_targets('Target detection', window_shape=(256, 256, 3), step=128, mode='Eval')
 #
 # for i in range(0, 950, 25):
 #     fig, axes = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
